@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --tg-theme-bg-color: #1a1a2e;
+  --tg-theme-text-color: #ffffff;
+  --tg-theme-hint-color: #8b8fa3;
+  --tg-theme-link-color: #5eaaef;
+  --tg-theme-button-color: #5eaaef;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #16213e;
+  --tg-theme-header-bg-color: #0f3460;
+  --tg-theme-section-bg-color: #1a1a2e;
+  --tg-theme-accent-text-color: #5eaaef;
+  --tg-theme-destructive-text-color: #ef5350;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--tg-theme-bg-color);
+  color: var(--tg-theme-text-color);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--tg-theme-hint-color);
+  border-radius: 4px;
+  opacity: 0.3;
+}
+
+/* Input styles for Telegram-native look */
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
