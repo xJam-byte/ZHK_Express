@@ -40,7 +40,9 @@ export default function CatalogPage() {
       setLoading(true);
       setError(null);
       const data = await fetchProducts();
-      setProducts(data);
+      // Ensure data is a real Array (SES lockdown can break Array.from too)
+      const arr: Product[] = Array.isArray(data) ? [...data] : [];
+      setProducts(arr);
     } catch (err) {
       setError('Не удалось загрузить товары');
       console.error(err);
@@ -49,9 +51,14 @@ export default function CatalogPage() {
     }
   };
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  // SES-safe filtering: avoid relying on Array.prototype.filter
+  const searchLower = search.toLowerCase();
+  const filtered: Product[] = [];
+  for (let i = 0; i < products.length; i++) {
+    if (products[i].name.toLowerCase().indexOf(searchLower) !== -1) {
+      filtered.push(products[i]);
+    }
+  }
 
   const user = getTelegramUser();
 
