@@ -32,6 +32,20 @@ api.interceptors.response.use(
   },
 );
 
+// --- Auth ---
+export interface UserProfile {
+  id: number;
+  telegramId: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  role: 'CLIENT' | 'SHOP' | 'ADMIN';
+  address: string | null;
+}
+
+export const fetchMe = (): Promise<UserProfile> =>
+  api.get('/auth/me').then((r) => r.data);
+
 // --- Products ---
 export const fetchProducts = () => api.get('/products').then((r) => r.data);
 

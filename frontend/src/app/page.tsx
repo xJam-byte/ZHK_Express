@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, Package, Loader2 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import CartButton from '@/components/CartButton';
-import { fetchProducts } from '@/lib/api';
+import { fetchProducts, fetchMe } from '@/lib/api';
 import { getTelegramWebApp, getTelegramUser } from '@/lib/telegram';
 
 interface Product {
@@ -32,8 +32,27 @@ export default function CatalogPage() {
       webapp.expand();
     }
 
+    // Check user role and auto-redirect
+    checkRoleAndRedirect();
     loadProducts();
   }, []);
+
+  const checkRoleAndRedirect = async () => {
+    try {
+      const me = await fetchMe();
+      if (me.role === 'ADMIN') {
+        router.replace('/admin');
+        return;
+      }
+      if (me.role === 'SHOP') {
+        router.replace('/shop');
+        return;
+      }
+    } catch (err) {
+      // If auth fails (no initData), stay on catalog — it works without auth
+      console.log('[Auth] Not authenticated, showing public catalog');
+    }
+  };
 
   const loadProducts = async () => {
     try {
