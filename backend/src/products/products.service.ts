@@ -182,6 +182,13 @@ export class ProductsService {
     });
   }
 
+  async updateProduct(id: number, data: { price?: number; stock?: number; name?: string }) {
+    return this.prisma.product.update({
+      where: { id },
+      data,
+    });
+  }
+
   async deleteProduct(id: number) {
     return this.prisma.product.delete({ where: { id } });
   }

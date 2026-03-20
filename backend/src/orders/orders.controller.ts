@@ -6,6 +6,7 @@ import {
   Param,
   Body,
   Req,
+  Query,
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
@@ -25,8 +26,15 @@ export class OrdersController {
   }
 
   @Get()
-  async getOrders(@Req() req: any) {
-    return this.ordersService.getOrders(req.user.role, req.user.id);
+  async getOrders(
+    @Req() req: any,
+    @Query('history') history?: string,
+  ) {
+    return this.ordersService.getOrders(
+      req.user.role,
+      req.user.id,
+      history === 'true',
+    );
   }
 
   @Get(':id')

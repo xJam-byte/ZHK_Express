@@ -55,6 +55,17 @@ export const fetchMe = (): Promise<UserProfile> =>
 // --- Products ---
 export const fetchProducts = () => api.get("/products").then((r) => r.data);
 
+export const fetchAllProducts = () =>
+  api.get("/products/all").then((r) => r.data);
+
+export const updateProduct = (
+  id: number,
+  data: { price?: number; stock?: number; name?: string },
+) => api.patch(`/products/${id}`, data).then((r) => r.data);
+
+export const toggleProduct = (id: number, isActive: boolean) =>
+  api.patch(`/products/${id}/toggle`, { isActive }).then((r) => r.data);
+
 export const importProducts = (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -78,6 +89,12 @@ export const createOrder = (data: CreateOrderPayload) =>
   api.post("/orders", data).then((r) => r.data);
 
 export const fetchOrders = () => api.get("/orders").then((r) => r.data);
+
+export const fetchOrderHistory = () =>
+  api.get("/orders?history=true").then((r) => r.data);
+
+export const fetchOrderById = (id: number) =>
+  api.get(`/orders/${id}`).then((r) => r.data);
 
 export const updateOrderStatus = (id: number, status: string) =>
   api.patch(`/orders/${id}/status`, { status }).then((r) => r.data);

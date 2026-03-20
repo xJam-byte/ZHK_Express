@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, Check, Package, Truck, Loader2, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { RefreshCw, Check, Package, Truck, Loader2, ChevronRight, History, ShoppingBag } from 'lucide-react';
 import OrderTimer from '@/components/OrderTimer';
 import { fetchOrders, updateOrderStatus } from '@/lib/api';
 import { hapticFeedback, hapticNotification } from '@/lib/telegram';
@@ -44,6 +45,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; next?: strin
 };
 
 export default function ShopPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
@@ -52,7 +54,7 @@ export default function ShopPage() {
     try {
       setLoading(true);
       const data = await fetchOrders();
-      setOrders(data);
+      setOrders(Array.isArray(data) ? [...data] : []);
     } catch (err) {
       console.error('Failed to load orders', err);
     } finally {
@@ -62,7 +64,6 @@ export default function ShopPage() {
 
   useEffect(() => {
     loadOrders();
-    // Auto-refresh every 15 seconds
     const interval = setInterval(loadOrders, 15000);
     return () => clearInterval(interval);
   }, [loadOrders]);
@@ -82,12 +83,15 @@ export default function ShopPage() {
     }
   };
 
-  const activeOrders = orders.filter(
-    (o) => !['DELIVERED', 'CANCELLED'].includes(o.status),
-  );
-  const completedOrders = orders.filter(
-    (o) => ['DELIVERED', 'CANCELLED'].includes(o.status),
-  );
+  const activeOrders: Order[] = [];
+  const completedOrders: Order[] = [];
+  for (let i = 0; i < orders.length; i++) {
+    if (orders[i].status === 'DELIVERED' || orders[i].status === 'CANCELLED') {
+      completedOrders.push(orders[i]);
+    } else {
+      activeOrders.push(orders[i]);
+    }
+  }
 
   return (
     <div className="min-h-screen pb-8 page-enter">
@@ -100,16 +104,32 @@ export default function ShopPage() {
               Панель магазина
             </p>
           </div>
-          <button
-            onClick={loadOrders}
-            disabled={loading}
-            className="w-9 h-9 rounded-xl bg-tg-secondary-bg flex items-center justify-center transition-transform active:scale-90"
-          >
-            <RefreshCw
-              size={16}
-              className={`text-tg-hint ${loading ? 'animate-spin' : ''}`}
-            />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/shop/products')}
+              className="w-9 h-9 rounded-xl bg-tg-secondary-bg flex items-center justify-center"
+              title="Товары"
+            >
+              <ShoppingBag size={16} className="text-tg-hint" />
+            </button>
+            <button
+              onClick={() => router.push('/shop/history')}
+              className="w-9 h-9 rounded-xl bg-tg-secondary-bg flex items-center justify-center"
+              title="История"
+            >
+              <History size={16} className="text-tg-hint" />
+            </button>
+            <button
+              onClick={loadOrders}
+              disabled={loading}
+              className="w-9 h-9 rounded-xl bg-tg-secondary-bg flex items-center justify-center transition-transform active:scale-90"
+            >
+              <RefreshCw
+                size={16}
+                className={`text-tg-hint ${loading ? 'animate-spin' : ''}`}
+              />
+            </button>
+          </div>
         </div>
       </div>
 

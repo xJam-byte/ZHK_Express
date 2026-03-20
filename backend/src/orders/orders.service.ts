@@ -89,24 +89,30 @@ export class OrdersService {
     return order;
   }
 
-  async getOrders(userRole: Role, userId?: number) {
+  async getOrders(userRole: Role, userId?: number, history = false) {
     const where: any = {};
 
     if (userRole === Role.CLIENT && userId) {
       where.userId = userId;
     }
 
-    // For SHOP role, show only active orders
+    // For SHOP role, filter by active vs history
     if (userRole === Role.SHOP) {
-      where.status = {
-        in: [
-          OrderStatus.PENDING,
-          OrderStatus.ACCEPTED,
-          OrderStatus.ASSEMBLING,
-          OrderStatus.READY,
-          OrderStatus.DELIVERING,
-        ],
-      };
+      if (history) {
+        where.status = {
+          in: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+        };
+      } else {
+        where.status = {
+          in: [
+            OrderStatus.PENDING,
+            OrderStatus.ACCEPTED,
+            OrderStatus.ASSEMBLING,
+            OrderStatus.READY,
+            OrderStatus.DELIVERING,
+          ],
+        };
+      }
     }
 
     return this.prisma.order.findMany({

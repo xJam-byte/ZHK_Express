@@ -28,7 +28,7 @@ export class ProductsController {
 
   @Get('all')
   @UseGuards(TelegramAuthGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SHOP)
   async findAllIncludingInactive() {
     return this.productsService.findAll(false);
   }
@@ -63,12 +63,22 @@ export class ProductsController {
 
   @Patch(':id/toggle')
   @UseGuards(TelegramAuthGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SHOP)
   async toggleActive(
     @Param('id', ParseIntPipe) id: number,
     @Body('isActive') isActive: boolean,
   ) {
     return this.productsService.toggleActive(id, isActive);
+  }
+
+  @Patch(':id')
+  @UseGuards(TelegramAuthGuard)
+  @Roles(Role.ADMIN, Role.SHOP)
+  async updateProduct(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { price?: number; stock?: number; name?: string },
+  ) {
+    return this.productsService.updateProduct(id, body);
   }
 
   @Delete(':id')

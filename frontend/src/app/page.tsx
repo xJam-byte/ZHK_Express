@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Package, Loader2 } from 'lucide-react';
+import { Search, Package, Loader2, ClipboardList } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import CartButton from '@/components/CartButton';
 import { fetchProducts, fetchMe } from '@/lib/api';
@@ -96,10 +96,18 @@ export default function CatalogPage() {
               </p>
             </div>
             {user && (
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center">
-                <span className="text-sm font-bold text-white">
-                  {user.first_name?.[0] || '?'}
-                </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push('/orders')}
+                  className="w-9 h-9 rounded-full bg-tg-secondary-bg flex items-center justify-center"
+                >
+                  <ClipboardList size={16} className="text-tg-hint" />
+                </button>
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">
+                    {user.first_name?.[0] || '?'}
+                  </span>
+                </div>
               </div>
             )}
           </div>
