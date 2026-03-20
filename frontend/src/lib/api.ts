@@ -1,7 +1,9 @@
-import axios from 'axios';
-import { getInitData } from './telegram';
+import axios from "axios";
+import { getInitData } from "./telegram";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://sariah-unburnt-uncoarsely.ngrok-free.dev";
 
 const api = axios.create({
   baseURL: `${API_BASE}/api`,
@@ -12,7 +14,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const initData = getInitData();
   if (initData) {
-    config.headers['X-Telegram-Init-Data'] = initData;
+    config.headers["X-Telegram-Init-Data"] = initData;
   }
   return config;
 });
@@ -22,9 +24,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const message =
-      error.response?.data?.message || error.message || 'Произошла ошибка';
+      error.response?.data?.message || error.message || "Произошла ошибка";
 
-    console.error('[API Error]', {
+    console.error("[API Error]", {
       url: error.config?.url,
       status: error.response?.status,
       message,
@@ -41,22 +43,24 @@ export interface UserProfile {
   firstName: string | null;
   lastName: string | null;
   username: string | null;
-  role: 'CLIENT' | 'SHOP' | 'ADMIN';
+  role: "CLIENT" | "SHOP" | "ADMIN";
   address: string | null;
 }
 
 export const fetchMe = (): Promise<UserProfile> =>
-  api.get('/auth/me').then((r) => r.data);
+  api.get("/auth/me").then((r) => r.data);
 
 // --- Products ---
-export const fetchProducts = () => api.get('/products').then((r) => r.data);
+export const fetchProducts = () => api.get("/products").then((r) => r.data);
 
 export const importProducts = (file: File) => {
   const formData = new FormData();
-  formData.append('file', file);
-  return api.post('/products/import', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }).then((r) => r.data);
+  formData.append("file", file);
+  return api
+    .post("/products/import", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    .then((r) => r.data);
 };
 
 // --- Orders ---
@@ -69,9 +73,9 @@ export interface CreateOrderPayload {
 }
 
 export const createOrder = (data: CreateOrderPayload) =>
-  api.post('/orders', data).then((r) => r.data);
+  api.post("/orders", data).then((r) => r.data);
 
-export const fetchOrders = () => api.get('/orders').then((r) => r.data);
+export const fetchOrders = () => api.get("/orders").then((r) => r.data);
 
 export const updateOrderStatus = (id: number, status: string) =>
   api.patch(`/orders/${id}/status`, { status }).then((r) => r.data);
