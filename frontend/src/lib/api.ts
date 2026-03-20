@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { getInitData } from './telegram';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${API_BASE}/api`,
   timeout: 15000,
 });
 
