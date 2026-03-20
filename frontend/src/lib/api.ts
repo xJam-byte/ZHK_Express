@@ -10,12 +10,14 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// Attach Telegram initData to every request
+// Attach Telegram initData and ngrok bypass header to every request
 api.interceptors.request.use((config) => {
   const initData = getInitData();
   if (initData) {
     config.headers["X-Telegram-Init-Data"] = initData;
   }
+  // Skip ngrok free tier interstitial "Visit Site" page
+  config.headers["ngrok-skip-browser-warning"] = "true";
   return config;
 });
 
