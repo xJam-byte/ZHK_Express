@@ -48,6 +48,11 @@ export default function CatalogPage() {
         router.replace('/shop');
         return;
       }
+      // CLIENT: check if complex is selected (first-time onboarding)
+      if (me.role === 'CLIENT' && !me.complexId) {
+        router.replace('/select-complex');
+        return;
+      }
     } catch (err) {
       // If auth fails (no initData), stay on catalog — it works without auth
       console.log('[Auth] Not authenticated, showing public catalog');

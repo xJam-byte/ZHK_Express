@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Req,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -29,13 +30,18 @@ export class ProductsController {
   @Get('all')
   @UseGuards(TelegramAuthGuard)
   @Roles(Role.ADMIN, Role.SHOP)
-  async findAllIncludingInactive() {
+  async findAllIncludingInactive(@Req() req: any) {
+    const user = req.user;
+    // SHOP users only see their own products
+    if (user.role === Role.SHOP) {
+      return this.productsService.findByShopUser(user.id);
+    }
     return this.productsService.findAll(false);
   }
 
   @Post('import')
   @UseGuards(TelegramAuthGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SHOP)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
@@ -54,11 +60,18 @@ export class ProductsController {
       },
     }),
   )
-  async importProducts(@UploadedFile() file: Express.Multer.File) {
+  async importProducts(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
-    return this.productsService.importFromFile(file);
+    const user = req.user;
+    // Determine shopId for the importing user
+    let shopId: number | undefined;
+    if (user.role === Role.SHOP) {
+      const shop = await this.productsService.getShopByUserId(user.id);
+      if (shop) shopId = shop.id;
+    }
+    return this.productsService.importFromFile(file, shopId);
   }
 
   @Patch(':id/toggle')
