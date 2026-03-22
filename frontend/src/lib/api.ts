@@ -47,10 +47,47 @@ export interface UserProfile {
   username: string | null;
   role: "CLIENT" | "SHOP" | "ADMIN";
   address: string | null;
+  complexId: number | null;
+  entrance: string | null;
+  floor: string | null;
+  apartment: string | null;
 }
 
 export const fetchMe = (): Promise<UserProfile> =>
   api.get("/auth/me").then((r) => r.data);
+
+export const saveUserAddress = (data: {
+  complexId: number;
+  entrance: string;
+  floor: string;
+  apartment: string;
+  comment?: string;
+}) => api.patch("/auth/address", data).then((r) => r.data);
+
+// --- Complexes ---
+export interface ResidentialComplex {
+  id: number;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+}
+
+export const fetchComplexes = (): Promise<ResidentialComplex[]> =>
+  api.get("/complexes").then((r) => r.data);
+
+export const resolveGeoComplex = (
+  latitude: number,
+  longitude: number,
+): Promise<{
+  complex: ResidentialComplex;
+  distance: number;
+  outOfRange?: boolean;
+}> =>
+  api
+    .post("/complexes/resolve-geo", { latitude, longitude })
+    .then((r) => r.data);
 
 // --- Products ---
 export const fetchProducts = () => api.get("/products").then((r) => r.data);
@@ -98,5 +135,51 @@ export const fetchOrderById = (id: number) =>
 
 export const updateOrderStatus = (id: number, status: string) =>
   api.patch(`/orders/${id}/status`, { status }).then((r) => r.data);
+
+// --- Admin Dashboard ---
+export interface DashboardData {
+  totalRevenue: number;
+  totalDeliveryFees: number;
+  platformFee: number;
+  totalOrders: number;
+  deliveredOrders: number;
+  cancelledOrders: number;
+  pendingOrders: number;
+  activeOrders: number;
+  averageOrderAmount: number;
+  totalClients: number;
+  activeShops: number;
+  suspendedShops: number;
+  shops: ShopStats[];
+}
+
+export interface ShopStats {
+  id: number;
+  name: string;
+  isActive: boolean;
+  revenue: number;
+  deliveredOrderCount: number;
+  activeOrderCount: number;
+  totalProducts: number;
+  totalOrders: number;
+  owner: {
+    firstName: string | null;
+    lastName: string | null;
+    username: string | null;
+  };
+}
+
+export const fetchDashboard = (): Promise<DashboardData> =>
+  api.get("/admin/dashboard").then((r) => r.data);
+
+// --- Admin Shops ---
+export const fetchShops = () =>
+  api.get("/admin/shops").then((r) => r.data);
+
+export const suspendShop = (id: number) =>
+  api.patch(`/admin/shops/${id}/suspend`).then((r) => r.data);
+
+export const resumeShop = (id: number) =>
+  api.patch(`/admin/shops/${id}/resume`).then((r) => r.data);
 
 export default api;

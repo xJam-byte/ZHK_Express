@@ -29,8 +29,28 @@ export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(onlyActive = true) {
+    const where: any = {};
+    if (onlyActive) {
+      where.isActive = true;
+      // Only show products from active shops (or products without a shop)
+      where.OR = [
+        { shop: null },
+        { shop: { isActive: true } },
+      ];
+    }
     return this.prisma.product.findMany({
-      where: onlyActive ? { isActive: true } : {},
+      where,
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async findByShopUser(userId: number) {
+    const shop = await this.prisma.shop.findUnique({
+      where: { userId },
+    });
+    if (!shop) return [];
+    return this.prisma.product.findMany({
+      where: { shopId: shop.id },
       orderBy: { name: 'asc' },
     });
   }
@@ -39,7 +59,11 @@ export class ProductsService {
     return this.prisma.product.findUnique({ where: { id } });
   }
 
-  async importFromFile(file: Express.Multer.File): Promise<ImportResult> {
+  async getShopByUserId(userId: number) {
+    return this.prisma.shop.findUnique({ where: { userId } });
+  }
+
+  async importFromFile(file: Express.Multer.File, shopId?: number): Promise<ImportResult> {
     const ext = file.originalname.split('.').pop()?.toLowerCase();
 
     let rows: ImportRow[];
@@ -57,7 +81,7 @@ export class ProductsService {
       throw new BadRequestException('File is empty or has invalid format');
     }
 
-    return this.upsertProducts(rows);
+    return this.upsertProducts(rows, shopId);
   }
 
   private async parseCsv(buffer: Buffer): Promise<ImportRow[]> {
@@ -125,7 +149,7 @@ export class ProductsService {
     };
   }
 
-  private async upsertProducts(rows: ImportRow[]): Promise<ImportResult> {
+  private async upsertProducts(rows: ImportRow[], shopId?: number): Promise<ImportResult> {
     const result: ImportResult = {
       total: rows.length,
       created: 0,
@@ -147,6 +171,7 @@ export class ProductsService {
               stock: row.stock ?? existing.stock,
               imageUrl: row.imageUrl ?? existing.imageUrl,
               isActive: true,
+              ...(shopId !== undefined ? { shopId } : {}),
             },
           });
           result.updated++;
@@ -158,6 +183,7 @@ export class ProductsService {
               stock: row.stock ?? 0,
               imageUrl: row.imageUrl,
               isActive: true,
+              ...(shopId !== undefined ? { shopId } : {}),
             },
           });
           result.created++;
@@ -170,7 +196,8 @@ export class ProductsService {
     }
 
     this.logger.log(
-      `Import complete: ${result.created} created, ${result.updated} updated, ${result.errors.length} errors`,
+      `Import complete: ${result.created} created, ${result.updated} updated, ${result.errors.length} errors` +
+      (shopId ? ` (shopId: ${shopId})` : ''),
     );
     return result;
   }

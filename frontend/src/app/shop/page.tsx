@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw, Check, Package, Truck, Loader2, ChevronRight, History, ShoppingBag } from 'lucide-react';
+import { RefreshCw, Check, Package, Truck, Loader2, ChevronRight, History, ShoppingBag, Upload } from 'lucide-react';
 import OrderTimer from '@/components/OrderTimer';
 import { fetchOrders, updateOrderStatus } from '@/lib/api';
 import { hapticFeedback, hapticNotification } from '@/lib/telegram';
@@ -111,6 +111,13 @@ export default function ShopPage() {
               title="Товары"
             >
               <ShoppingBag size={16} className="text-tg-hint" />
+            </button>
+            <button
+              onClick={() => router.push('/shop/import')}
+              className="w-9 h-9 rounded-xl bg-tg-secondary-bg flex items-center justify-center"
+              title="Импорт"
+            >
+              <Upload size={16} className="text-tg-hint" />
             </button>
             <button
               onClick={() => router.push('/shop/history')}
