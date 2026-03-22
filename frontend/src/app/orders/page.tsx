@@ -93,33 +93,36 @@ export default function OrdersPage() {
             <button
               key={order.id}
               onClick={() => router.push(`/orders/${order.id}`)}
-              className="w-full bg-white border border-gray-100 shadow-sm hover:shadow-md rounded-3xl p-5 text-left transition-all active:scale-[0.98]"
+              className="w-full bg-white border border-gray-100 shadow-sm hover:shadow-md rounded-3xl p-5 text-left transition-all active:scale-[0.98] flex flex-col gap-3"
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-gray-900 font-bold text-[15px]">
+              <div className="flex items-center justify-between w-full">
+                <span className="text-gray-900 font-extrabold text-[16px] tracking-tight">
                   Заказ #{order.id}
                 </span>
                 <span
-                  className={`text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${STATUS_COLORS[order.status] || ''}`}
+                  className={`text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}
                 >
                   {STATUS_LABELS[order.status] || order.status}
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 text-gray-500 text-[13px] font-medium mb-2.5">
-                <Clock size={14} />
-                <span>{formatDate(order.createdAt)}</span>
+              <div className="flex items-center justify-between w-full px-0.5">
+                <div className="flex items-center gap-1.5 text-gray-500 text-[13px] font-medium">
+                  <Clock size={14} />
+                  <span>{formatDate(order.createdAt)}</span>
+                </div>
+                <div className="text-gray-500 text-[13px] font-medium bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                  {order.items?.length || 0} {order.items?.length === 1 ? 'товар' : 'товаров'}
+                </div>
               </div>
 
-              <div className="text-gray-500 text-[13px] font-medium mb-3">
-                {order.items?.length || 0} {order.items?.length === 1 ? 'товар' : 'товаров'}
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <span className="text-gray-900 font-bold text-lg">
+              <div className="flex items-center justify-between pt-4 mt-1 border-t border-gray-100 border-dashed w-full">
+                <span className="text-gray-900 font-black text-[18px]">
                   {order.totalAmount.toLocaleString()} ₸
                 </span>
-                <ChevronRight size={18} className="text-gray-400" />
+                <div className="flex items-center gap-1 text-primary font-bold text-[14px]">
+                  Подробнее <ChevronRight size={16} />
+                </div>
               </div>
             </button>
           ))

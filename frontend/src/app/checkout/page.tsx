@@ -139,63 +139,68 @@ export default function CheckoutPage() {
       <div className="px-4 pt-6 space-y-5">
         {/* Cart Items */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="text-[15px] font-bold text-gray-900">Ваш заказ</h2>
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="text-[16px] font-extrabold text-gray-900 tracking-tight">Ваш заказ</h2>
           </div>
 
-          {items.map((item) => (
-            <div
-              key={item.productId}
-              className="px-5 py-4 flex items-center gap-4 border-b border-gray-100 last:border-0"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-[15px] text-gray-800 font-semibold truncate leading-tight">
-                  {item.name}
-                </p>
-                <p className="text-sm text-gray-500 mt-1 font-medium">
-                  {item.price.toLocaleString()} ₸ × {item.quantity}
-                </p>
+          <div className="divide-y divide-gray-100">
+            {items.map((item) => (
+              <div key={item.productId} className="p-5 flex flex-col gap-2">
+                <div className="flex justify-between items-start gap-4">
+                  <p className="text-[15px] text-gray-900 font-bold leading-snug flex-1">
+                    {item.name}
+                  </p>
+                  <span className="text-[16px] font-black text-gray-900 whitespace-nowrap mt-0.5">
+                    {(item.price * item.quantity).toLocaleString()} ₸
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-[13px] text-gray-500 font-medium bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
+                    {item.price.toLocaleString()} ₸ / шт
+                  </p>
+
+                  <div className="flex items-center bg-gray-50 rounded-2xl p-1 shadow-inner border border-gray-200/60">
+                    <button
+                      onClick={() => {
+                        if (item.quantity === 1) removeItem(item.productId);
+                        else decrementItem(item.productId);
+                        hapticFeedback('light');
+                      }}
+                      className="w-8 h-8 rounded-xl bg-white flex items-center justify-center transition-transform active:scale-95 shadow-sm border border-gray-100"
+                    >
+                      {item.quantity === 1 ? (
+                        <Trash2 size={16} className="text-red-500" />
+                      ) : (
+                        <Minus size={16} className="text-gray-700" />
+                      )}
+                    </button>
+
+                    <span className="w-10 text-center text-[15px] font-bold text-gray-900">
+                      {item.quantity}
+                    </span>
+
+                    <button
+                      onClick={() => {
+                        addItem({ id: item.productId, name: item.name, price: item.price });
+                        hapticFeedback('light');
+                      }}
+                      className="w-8 h-8 rounded-xl bg-white flex items-center justify-center transition-transform active:scale-95 shadow-sm border border-gray-100"
+                    >
+                      <Plus size={16} className="text-primary" />
+                    </button>
+                  </div>
+                </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => { decrementItem(item.productId); hapticFeedback('light'); }}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center transition-transform active:scale-90 hover:bg-gray-200"
-                >
-                  <Minus size={14} className="text-gray-600" />
-                </button>
-
-                <span className="w-6 text-center text-[15px] font-bold text-gray-900">
-                  {item.quantity}
-                </span>
-
-                <button
-                  onClick={() => { addItem({ id: item.productId, name: item.name, price: item.price }); hapticFeedback('light'); }}
-                  className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center transition-transform active:scale-90 hover:bg-primary/20"
-                >
-                  <Plus size={14} className="text-primary" />
-                </button>
-
-                <button
-                  onClick={() => { removeItem(item.productId); hapticFeedback('medium'); }}
-                  className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center ml-2 transition-transform active:scale-90 hover:bg-red-100"
-                >
-                  <Trash2 size={14} className="text-red-500" />
-                </button>
-              </div>
-
-              <span className="text-sm font-bold text-tg-text w-16 text-right">
-                {(item.price * item.quantity).toLocaleString()} ₸
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Delivery Address */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2.5">
             <MapPin size={18} className="text-primary" />
-            <h2 className="text-[15px] font-bold text-gray-900">Адрес доставки</h2>
+            <h2 className="text-[16px] font-extrabold text-gray-900 tracking-tight">Куда привезти?</h2>
           </div>
 
           <div className="p-5 grid grid-cols-3 gap-3">
@@ -259,18 +264,27 @@ export default function CheckoutPage() {
         </div>
 
         {/* Summary */}
-        <div className="bg-white px-5 py-4 rounded-3xl shadow-sm border border-gray-100 space-y-3">
-          <div className="flex justify-between text-[15px] font-medium">
-            <span className="text-gray-500">Товары</span>
-            <span className="text-gray-900">{subtotal.toLocaleString()} ₸</span>
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="text-[16px] font-extrabold text-gray-900 tracking-tight">Чек</h2>
           </div>
-          <div className="flex justify-between text-[15px] font-medium">
-            <span className="text-gray-500">Доставка</span>
-            <span className="text-gray-900">{DELIVERY_FEE} ₸</span>
-          </div>
-          <div className="border-t border-gray-100 pt-3 mt-3 flex justify-between">
-            <span className="text-gray-900 font-bold text-lg">Итого</span>
-            <span className="text-gray-900 font-bold text-xl">{total.toLocaleString()} ₸</span>
+          
+          <div className="p-5 space-y-3">
+            <div className="flex justify-between text-[15px]">
+              <span className="text-gray-500 font-medium">Товары</span>
+              <span className="text-gray-900 font-bold">{subtotal.toLocaleString()} ₸</span>
+            </div>
+            <div className="flex justify-between text-[15px]">
+              <span className="text-gray-500 font-medium">Доставка</span>
+              <span className="text-gray-900 font-bold">{DELIVERY_FEE.toLocaleString()} ₸</span>
+            </div>
+
+            <div className="pt-4 mt-2 border-t border-gray-100 border-dashed flex justify-between items-center">
+              <span className="text-[16px] font-bold text-gray-900">К оплате</span>
+              <span className="text-[20px] font-black text-gray-900">
+                {total.toLocaleString()} ₸
+              </span>
+            </div>
           </div>
         </div>
 

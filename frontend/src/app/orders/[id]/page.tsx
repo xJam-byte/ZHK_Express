@@ -144,34 +144,40 @@ export default function OrderTrackingPage() {
         </div>
 
         {/* Order Items */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
-          <h3 className="text-gray-900 font-bold text-[15px] mb-4">Товары</h3>
-          <div className="space-y-4">
+        {/* Order Items */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="text-[16px] font-extrabold text-gray-900 tracking-tight">Состав заказа</h2>
+          </div>
+          
+          <div className="divide-y divide-gray-100">
             {order.items?.map((item: any) => (
-              <div key={item.id} className="flex items-center justify-between">
-                <div className="flex-1 min-w-0 pr-3">
-                  <p className="text-gray-800 text-[14px] font-medium truncate">
+              <div key={item.id} className="p-5 flex justify-between items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] text-gray-900 font-bold leading-snug">
                     {item.product?.name || 'Товар'}
                   </p>
-                  <p className="text-gray-500 text-[13px] mt-0.5 font-medium">
-                    {item.quantity} × {item.priceAtPurchase.toLocaleString()} ₸
+                  <p className="text-[12px] text-gray-500 mt-1.5 font-medium bg-gray-50 inline-block px-2 py-0.5 rounded-md border border-gray-100">
+                    {item.quantity} шт × {item.priceAtPurchase.toLocaleString()} ₸
                   </p>
                 </div>
-                <span className="text-gray-900 text-[15px] font-bold whitespace-nowrap">
+                <span className="text-[15px] font-black text-gray-900 whitespace-nowrap mt-0.5">
                   {(item.quantity * item.priceAtPurchase).toLocaleString()} ₸
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
-            <div className="flex justify-between text-[14px] font-medium text-gray-500">
-              <span>Доставка</span>
-              <span>{order.deliveryFee} ₸</span>
+          <div className="px-5 py-4 bg-gray-50/30 border-t border-gray-100 border-dashed space-y-3">
+            <div className="flex justify-between text-[14px]">
+              <span className="text-gray-500 font-medium">Доставка</span>
+              <span className="text-gray-900 font-semibold">{order.deliveryFee} ₸</span>
             </div>
-            <div className="flex justify-between text-gray-900 font-bold text-[16px]">
-              <span>Итого</span>
-              <span>{order.totalAmount.toLocaleString()} ₸</span>
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-[16px] font-bold text-gray-900">Итого</span>
+              <span className="text-[20px] font-black text-gray-900">
+                {order.totalAmount.toLocaleString()} ₸
+              </span>
             </div>
           </div>
         </div>
