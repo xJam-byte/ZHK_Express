@@ -47,7 +47,7 @@ export interface UserProfile {
   username: string | null;
   role: "CLIENT" | "SHOP" | "ADMIN";
   address: string | null;
-  complexId: number | null;
+  selectedShopId: number | null;
   entrance: string | null;
   floor: string | null;
   apartment: string | null;
@@ -57,36 +57,36 @@ export const fetchMe = (): Promise<UserProfile> =>
   api.get("/auth/me").then((r) => r.data);
 
 export const saveUserAddress = (data: {
-  complexId: number;
+  shopId: number;
   entrance: string;
   floor: string;
   apartment: string;
   comment?: string;
 }) => api.patch("/auth/address", data).then((r) => r.data);
 
-// --- Complexes ---
-export interface ResidentialComplex {
+// --- Shops Geo ---
+export interface ShopInfo {
   id: number;
   name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   radius: number;
 }
 
-export const fetchComplexes = (): Promise<ResidentialComplex[]> =>
-  api.get("/complexes").then((r) => r.data);
+export const fetchActiveShops = (): Promise<ShopInfo[]> =>
+  api.get("/shops").then((r) => r.data);
 
-export const resolveGeoComplex = (
+export const resolveGeoShop = (
   latitude: number,
   longitude: number,
 ): Promise<{
-  complex: ResidentialComplex;
+  shop: ShopInfo;
   distance: number;
   outOfRange?: boolean;
 }> =>
   api
-    .post("/complexes/resolve-geo", { latitude, longitude })
+    .post("/shops/resolve-geo", { latitude, longitude })
     .then((r) => r.data);
 
 // --- Products ---

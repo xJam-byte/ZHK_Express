@@ -48,9 +48,9 @@ export default function CatalogPage() {
         router.replace('/shop');
         return;
       }
-      // CLIENT: check if complex is selected (first-time onboarding)
-      if (me.role === 'CLIENT' && !me.complexId) {
-        router.replace('/select-complex');
+      // CLIENT: check if shop is selected (first-time onboarding)
+      if (me.role === 'CLIENT' && !me.selectedShopId) {
+        router.replace('/select-shop');
         return;
       }
     } catch (err) {
