@@ -27,14 +27,14 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="bg-tg-secondary-bg rounded-2xl overflow-hidden animate-fade-in transition-transform active:scale-[0.97]">
+    <div className="bg-white rounded-3xl overflow-hidden animate-fade-in transition-transform active:scale-[0.97] shadow-sm hover:shadow-md border border-gray-100/50">
       {/* Product Image */}
-      <div className="relative aspect-square bg-tg-bg overflow-hidden">
+      <div className="relative aspect-square bg-white overflow-hidden p-2">
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain rounded-2xl"
             loading="lazy"
           />
         ) : (
@@ -54,7 +54,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
       {/* Info */}
       <div className="p-3">
-        <h3 className="text-tg-text text-sm font-medium leading-tight line-clamp-2 min-h-[2.5rem]">
+        <h3 className="text-tg-text text-[13px] font-medium leading-tight line-clamp-2 min-h-[2.5rem]">
           {product.name}
         </h3>
 
@@ -67,32 +67,32 @@ export default function ProductCard({ product }: { product: Product }) {
             <button
               onClick={handleAdd}
               disabled={product.stock === 0}
-              className="w-9 h-9 rounded-xl bg-tg-button flex items-center justify-center 
+              className="w-9 h-9 rounded-full bg-primary flex items-center justify-center 
                          transition-all active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed
-                         shadow-lg shadow-tg-button/20 hover:shadow-tg-button/40"
+                         shadow-md shadow-primary/30 hover:bg-secondary group"
             >
-              <Plus size={18} className="text-tg-button-text" />
+              <Plus size={18} className="text-white group-hover:text-gray-900 transition-colors" />
             </button>
           ) : (
             <div className="flex items-center gap-1.5 animate-scale-in">
               <button
                 onClick={handleDecrement}
-                className="w-8 h-8 rounded-xl bg-tg-secondary-bg border border-tg-hint/20 flex items-center justify-center 
-                           transition-all active:scale-90"
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center 
+                           transition-all active:scale-90 hover:bg-gray-200"
               >
-                <Minus size={14} className="text-tg-hint" />
+                <Minus size={16} className="text-gray-600" />
               </button>
 
-              <span className="w-6 text-center text-tg-text font-bold text-sm">
+              <span className="w-5 text-center text-tg-text font-bold text-sm">
                 {quantity}
               </span>
 
               <button
                 onClick={handleAdd}
-                className="w-8 h-8 rounded-xl bg-tg-button flex items-center justify-center 
-                           transition-all active:scale-90 shadow-md shadow-tg-button/20"
+                className="w-8 h-8 rounded-full bg-primary flex items-center justify-center 
+                           transition-all active:scale-90 shadow-sm shadow-primary/30 hover:bg-secondary group"
               >
-                <Plus size={14} className="text-tg-button-text" />
+                <Plus size={16} className="text-white group-hover:text-gray-900 transition-colors" />
               </button>
             </div>
           )}

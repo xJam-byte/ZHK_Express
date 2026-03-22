@@ -77,28 +77,28 @@ export default function OrderTrackingPage() {
   return (
     <div className="min-h-screen pb-8">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-tg-bg/80 backdrop-blur-xl border-b border-white/5 px-4 py-4">
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm px-4 py-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/orders')}
-            className="w-9 h-9 rounded-full bg-tg-secondary-bg flex items-center justify-center"
+            className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
           >
-            <ArrowLeft size={18} className="text-tg-hint" />
+            <ArrowLeft size={20} className="text-gray-800" />
           </button>
-          <h1 className="text-lg font-bold text-tg-text">Заказ #{order.id}</h1>
+          <h1 className="text-xl font-bold text-gray-900">Заказ #{order.id}</h1>
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-4 pt-6 space-y-5">
         {/* Status Card */}
-        <div className="bg-tg-secondary-bg rounded-2xl p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className={`w-12 h-12 rounded-full bg-tg-bg flex items-center justify-center ${config.color}`}>
-              <StatusIcon size={24} />
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-4 mb-5">
+            <div className={`w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center shadow-inner ${config.color}`}>
+              <StatusIcon size={26} />
             </div>
             <div>
-              <p className={`font-semibold text-lg ${config.color}`}>{config.label}</p>
-              <p className="text-tg-hint text-xs">
+              <p className={`font-bold text-[17px] ${config.color}`}>{config.label}</p>
+              <p className="text-gray-500 text-[13px] font-medium mt-0.5">
                 {new Date(order.createdAt).toLocaleDateString('ru-RU', {
                   day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
                 })}
@@ -108,14 +108,14 @@ export default function OrderTrackingPage() {
 
           {/* Progress Steps */}
           {!isCancelled && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5 mt-2">
               {STATUS_STEPS.map((step, i) => (
                 <div
                   key={step}
-                  className={`h-1.5 flex-1 rounded-full transition-colors ${
+                  className={`h-2 flex-1 rounded-full transition-colors ${
                     i <= currentStepIndex
-                      ? 'bg-tg-button'
-                      : 'bg-tg-bg'
+                      ? 'bg-primary'
+                      : 'bg-gray-100'
                   }`}
                 />
               ))}
@@ -124,54 +124,54 @@ export default function OrderTrackingPage() {
         </div>
 
         {/* Delivery Address */}
-        <div className="bg-tg-secondary-bg rounded-2xl p-4">
-          <div className="flex items-start gap-3">
-            <MapPin size={18} className="text-tg-hint mt-0.5 shrink-0" />
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-start gap-4">
+            <MapPin size={20} className="text-gray-400 mt-0.5 shrink-0" />
             <div>
-              <p className="text-tg-text text-sm font-medium">Адрес доставки</p>
-              <p className="text-tg-hint text-xs mt-1">{order.deliveryAddress}</p>
+              <p className="text-gray-900 text-[15px] font-bold">Адрес доставки</p>
+              <p className="text-gray-500 text-[13px] mt-1 font-medium leading-relaxed">{order.deliveryAddress}</p>
             </div>
           </div>
           {order.comment && (
-            <div className="flex items-start gap-3 mt-3 pt-3 border-t border-white/5">
-              <MessageSquare size={18} className="text-tg-hint mt-0.5 shrink-0" />
+            <div className="flex items-start gap-4 mt-4 pt-4 border-t border-gray-100">
+              <MessageSquare size={20} className="text-gray-400 mt-0.5 shrink-0" />
               <div>
-                <p className="text-tg-text text-sm font-medium">Комментарий</p>
-                <p className="text-tg-hint text-xs mt-1">{order.comment}</p>
+                <p className="text-gray-900 text-[15px] font-bold">Комментарий</p>
+                <p className="text-gray-500 text-[13px] mt-1 font-medium leading-relaxed">{order.comment}</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Order Items */}
-        <div className="bg-tg-secondary-bg rounded-2xl p-4">
-          <h3 className="text-tg-text font-semibold text-sm mb-3">Товары</h3>
-          <div className="space-y-3">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
+          <h3 className="text-gray-900 font-bold text-[15px] mb-4">Товары</h3>
+          <div className="space-y-4">
             {order.items?.map((item: any) => (
               <div key={item.id} className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-tg-text text-sm truncate">
+                <div className="flex-1 min-w-0 pr-3">
+                  <p className="text-gray-800 text-[14px] font-medium truncate">
                     {item.product?.name || 'Товар'}
                   </p>
-                  <p className="text-tg-hint text-xs">
-                    {item.quantity} × {item.priceAtPurchase} ₸
+                  <p className="text-gray-500 text-[13px] mt-0.5 font-medium">
+                    {item.quantity} × {item.priceAtPurchase.toLocaleString()} ₸
                   </p>
                 </div>
-                <span className="text-tg-text text-sm font-medium ml-3">
-                  {item.quantity * item.priceAtPurchase} ₸
+                <span className="text-gray-900 text-[15px] font-bold whitespace-nowrap">
+                  {(item.quantity * item.priceAtPurchase).toLocaleString()} ₸
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="mt-3 pt-3 border-t border-white/5 space-y-1">
-            <div className="flex justify-between text-xs text-tg-hint">
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+            <div className="flex justify-between text-[14px] font-medium text-gray-500">
               <span>Доставка</span>
               <span>{order.deliveryFee} ₸</span>
             </div>
-            <div className="flex justify-between text-tg-text font-bold">
+            <div className="flex justify-between text-gray-900 font-bold text-[16px]">
               <span>Итого</span>
-              <span>{order.totalAmount} ₸</span>
+              <span>{order.totalAmount.toLocaleString()} ₸</span>
             </div>
           </div>
         </div>

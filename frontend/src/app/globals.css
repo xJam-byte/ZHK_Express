@@ -5,17 +5,17 @@
 @tailwind utilities;
 
 :root {
-  --tg-theme-bg-color: #1a1a2e;
-  --tg-theme-text-color: #ffffff;
-  --tg-theme-hint-color: #8b8fa3;
-  --tg-theme-link-color: #5eaaef;
-  --tg-theme-button-color: #5eaaef;
-  --tg-theme-button-text-color: #ffffff;
-  --tg-theme-secondary-bg-color: #16213e;
-  --tg-theme-header-bg-color: #0f3460;
-  --tg-theme-section-bg-color: #1a1a2e;
-  --tg-theme-accent-text-color: #5eaaef;
-  --tg-theme-destructive-text-color: #ef5350;
+  --tg-theme-bg-color: #ffffff !important;
+  --tg-theme-text-color: #1f2937 !important;
+  --tg-theme-hint-color: #6b7280 !important;
+  --tg-theme-link-color: #52c86b !important;
+  --tg-theme-button-color: #52c86b !important;
+  --tg-theme-button-text-color: #ffffff !important;
+  --tg-theme-secondary-bg-color: #f3f4f6 !important;
+  --tg-theme-header-bg-color: #ffffff !important;
+  --tg-theme-section-bg-color: #ffffff !important;
+  --tg-theme-accent-text-color: #fde047 !important;
+  --tg-theme-destructive-text-color: #ef4444 !important;
 }
 
 * {

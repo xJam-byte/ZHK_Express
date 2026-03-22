@@ -7,17 +7,27 @@ module.exports = {
     extend: {
       colors: {
         tg: {
-          bg: 'var(--tg-theme-bg-color, #1a1a2e)',
-          text: 'var(--tg-theme-text-color, #ffffff)',
-          hint: 'var(--tg-theme-hint-color, #8b8fa3)',
-          link: 'var(--tg-theme-link-color, #5eaaef)',
-          button: 'var(--tg-theme-button-color, #5eaaef)',
+          bg: 'var(--tg-theme-bg-color, #ffffff)',
+          text: 'var(--tg-theme-text-color, #1f2937)',
+          hint: 'var(--tg-theme-hint-color, #6b7280)',
+          link: 'var(--tg-theme-link-color, #52c86b)',
+          button: 'var(--tg-theme-button-color, #52c86b)',
           'button-text': 'var(--tg-theme-button-text-color, #ffffff)',
-          'secondary-bg': 'var(--tg-theme-secondary-bg-color, #16213e)',
-          'header-bg': 'var(--tg-theme-header-bg-color, #0f3460)',
-          'section-bg': 'var(--tg-theme-section-bg-color, #1a1a2e)',
-          'accent': 'var(--tg-theme-accent-text-color, #5eaaef)',
-          'destructive': 'var(--tg-theme-destructive-text-color, #ef5350)',
+          'secondary-bg': 'var(--tg-theme-secondary-bg-color, #f3f4f6)',
+          'header-bg': 'var(--tg-theme-header-bg-color, #ffffff)',
+          'section-bg': 'var(--tg-theme-section-bg-color, #ffffff)',
+          'accent': 'var(--tg-theme-accent-text-color, #fde047)',
+          'destructive': 'var(--tg-theme-destructive-text-color, #ef4444)',
+        },
+        primary: {
+          DEFAULT: '#52c86b',
+          hover: '#a1e45c',
+        },
+        secondary: {
+          DEFAULT: '#a1e45c',
+        },
+        accent: {
+          DEFAULT: '#fde047',
         },
       },
       fontFamily: {

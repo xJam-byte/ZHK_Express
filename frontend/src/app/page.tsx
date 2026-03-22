@@ -84,7 +84,7 @@ export default function CatalogPage() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-tg-bg/80 backdrop-blur-xl border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm">
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -101,7 +101,7 @@ export default function CatalogPage() {
                   onClick={() => router.push('/orders')}
                   className="w-9 h-9 rounded-full bg-tg-secondary-bg flex items-center justify-center"
                 >
-                  <ClipboardList size={16} className="text-tg-hint" />
+                  <ClipboardList size={20} className="text-gray-600" />
                 </button>
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-tg-button to-tg-accent flex items-center justify-center">
                   <span className="text-sm font-bold text-white">
@@ -123,8 +123,8 @@ export default function CatalogPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Найти товар..."
-              className="w-full py-2.5 pl-10 pr-4 bg-tg-secondary-bg rounded-xl text-sm text-tg-text placeholder:text-tg-hint/60 
-                         border border-white/5 focus:border-tg-button/30 transition-colors"
+              className="w-full py-2.5 pl-10 pr-4 bg-gray-50 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 
+                         border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
             />
           </div>
         </div>
@@ -134,31 +134,31 @@ export default function CatalogPage() {
       <div className="px-4 pt-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 size={32} className="text-tg-button animate-spin" />
-            <p className="text-tg-hint text-sm">Загружаем каталог...</p>
+            <Loader2 size={32} className="text-primary animate-spin" />
+            <p className="text-gray-500 text-sm font-medium">Загружаем каталог...</p>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Package size={48} className="text-tg-hint/40" />
-            <p className="text-tg-hint text-sm">{error}</p>
+            <Package size={48} className="text-gray-300" />
+            <p className="text-gray-500 text-sm font-medium">{error}</p>
             <button
               onClick={loadProducts}
-              className="mt-2 px-4 py-2 bg-tg-button rounded-xl text-tg-button-text text-sm font-medium transition-transform active:scale-95"
+              className="mt-2 px-5 py-2.5 bg-primary rounded-xl text-white text-sm font-semibold transition-transform active:scale-95 shadow-md shadow-primary/20 hover:bg-secondary group"
             >
-              Попробовать снова
+              <span className="group-hover:text-gray-900 transition-colors">Попробовать снова</span>
             </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Search size={48} className="text-tg-hint/40" />
-            <p className="text-tg-hint text-sm">
+            <Search size={48} className="text-gray-300" />
+            <p className="text-gray-500 text-sm font-medium">
               {search ? 'Ничего не найдено' : 'Каталог пуст'}
             </p>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-tg-hint text-xs">
+              <span className="text-gray-500 font-medium tracking-wide text-[11px] uppercase">
                 {filtered.length} {filtered.length === 1 ? 'товар' : 'товаров'}
               </span>
             </div>

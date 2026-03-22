@@ -104,16 +104,16 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-4">
-        <div className="w-20 h-20 rounded-3xl bg-tg-secondary-bg flex items-center justify-center">
+        <div className="w-20 h-20 rounded-[2rem] bg-gray-50 flex items-center justify-center shadow-inner">
           <span className="text-4xl">🛒</span>
         </div>
-        <p className="text-tg-text font-semibold text-lg">Корзина пуста</p>
-        <p className="text-tg-hint text-sm text-center">
+        <p className="text-gray-900 font-bold text-[19px]">Корзина пуста</p>
+        <p className="text-gray-500 text-[15px] font-medium text-center">
           Добавьте товары из каталога
         </p>
         <button
           onClick={() => router.push('/')}
-          className="mt-2 px-6 py-3 bg-tg-button rounded-xl text-tg-button-text font-medium transition-transform active:scale-95"
+          className="mt-3 px-6 py-3 bg-primary rounded-2xl text-white font-semibold transition-transform active:scale-95 hover:bg-secondary shadow-md shadow-primary/20"
         >
           В каталог
         </button>
@@ -124,63 +124,63 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen pb-32 page-enter">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-tg-bg/80 backdrop-blur-xl border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm">
         <div className="px-4 py-4 flex items-center gap-3">
           <button
             onClick={() => router.push('/')}
-            className="w-9 h-9 rounded-xl bg-tg-secondary-bg flex items-center justify-center transition-transform active:scale-90"
+            className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center transition-transform active:scale-90 hover:bg-gray-50"
           >
-            <ArrowLeft size={18} className="text-tg-text" />
+            <ArrowLeft size={20} className="text-gray-800" />
           </button>
-          <h1 className="text-lg font-bold text-tg-text">Оформление</h1>
+          <h1 className="text-xl font-bold text-gray-900">Оформление</h1>
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-4 pt-6 space-y-5">
         {/* Cart Items */}
-        <div className="bg-tg-secondary-bg rounded-2xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/5">
-            <h2 className="text-sm font-semibold text-tg-text">Ваш заказ</h2>
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h2 className="text-[15px] font-bold text-gray-900">Ваш заказ</h2>
           </div>
 
           {items.map((item) => (
             <div
               key={item.productId}
-              className="px-4 py-3 flex items-center gap-3 border-b border-white/5 last:border-0"
+              className="px-5 py-4 flex items-center gap-4 border-b border-gray-100 last:border-0"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-tg-text font-medium truncate">
+                <p className="text-[15px] text-gray-800 font-semibold truncate leading-tight">
                   {item.name}
                 </p>
-                <p className="text-xs text-tg-hint mt-0.5">
+                <p className="text-sm text-gray-500 mt-1 font-medium">
                   {item.price.toLocaleString()} ₸ × {item.quantity}
                 </p>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => { decrementItem(item.productId); hapticFeedback('light'); }}
-                  className="w-7 h-7 rounded-lg bg-tg-bg flex items-center justify-center transition-transform active:scale-90"
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center transition-transform active:scale-90 hover:bg-gray-200"
                 >
-                  <Minus size={12} className="text-tg-hint" />
+                  <Minus size={14} className="text-gray-600" />
                 </button>
 
-                <span className="w-5 text-center text-sm font-bold text-tg-text">
+                <span className="w-6 text-center text-[15px] font-bold text-gray-900">
                   {item.quantity}
                 </span>
 
                 <button
                   onClick={() => { addItem({ id: item.productId, name: item.name, price: item.price }); hapticFeedback('light'); }}
-                  className="w-7 h-7 rounded-lg bg-tg-button/20 flex items-center justify-center transition-transform active:scale-90"
+                  className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center transition-transform active:scale-90 hover:bg-primary/20"
                 >
-                  <Plus size={12} className="text-tg-button" />
+                  <Plus size={14} className="text-primary" />
                 </button>
 
                 <button
                   onClick={() => { removeItem(item.productId); hapticFeedback('medium'); }}
-                  className="w-7 h-7 rounded-lg bg-tg-destructive/10 flex items-center justify-center ml-1 transition-transform active:scale-90"
+                  className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center ml-2 transition-transform active:scale-90 hover:bg-red-100"
                 >
-                  <Trash2 size={12} className="text-tg-destructive" />
+                  <Trash2 size={14} className="text-red-500" />
                 </button>
               </div>
 
@@ -192,15 +192,15 @@ export default function CheckoutPage() {
         </div>
 
         {/* Delivery Address */}
-        <div className="bg-tg-secondary-bg rounded-2xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
-            <MapPin size={16} className="text-tg-button" />
-            <h2 className="text-sm font-semibold text-tg-text">Адрес доставки</h2>
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+            <MapPin size={18} className="text-primary" />
+            <h2 className="text-[15px] font-bold text-gray-900">Адрес доставки</h2>
           </div>
 
-          <div className="p-4 grid grid-cols-3 gap-3">
+          <div className="p-5 grid grid-cols-3 gap-3">
             <div>
-              <label className="text-[11px] text-tg-hint font-medium uppercase tracking-wide">
+              <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">
                 Подъезд
               </label>
               <input
@@ -209,12 +209,12 @@ export default function CheckoutPage() {
                 value={entrance}
                 onChange={(e) => setEntrance(e.target.value)}
                 placeholder="1"
-                className="mt-1 w-full py-2.5 px-3 bg-tg-bg rounded-xl text-sm text-tg-text text-center 
-                           border border-white/5 focus:border-tg-button/40 transition-colors"
+                className="mt-1.5 w-full py-3 px-3 bg-gray-50 rounded-xl text-[15px] text-gray-900 font-medium text-center 
+                           border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
               />
             </div>
             <div>
-              <label className="text-[11px] text-tg-hint font-medium uppercase tracking-wide">
+              <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">
                 Этаж
               </label>
               <input
@@ -223,12 +223,12 @@ export default function CheckoutPage() {
                 value={floor}
                 onChange={(e) => setFloor(e.target.value)}
                 placeholder="5"
-                className="mt-1 w-full py-2.5 px-3 bg-tg-bg rounded-xl text-sm text-tg-text text-center 
-                           border border-white/5 focus:border-tg-button/40 transition-colors"
+                className="mt-1.5 w-full py-3 px-3 bg-gray-50 rounded-xl text-[15px] text-gray-900 font-medium text-center 
+                           border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
               />
             </div>
             <div>
-              <label className="text-[11px] text-tg-hint font-medium uppercase tracking-wide">
+              <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">
                 Квартира
               </label>
               <input
@@ -237,14 +237,14 @@ export default function CheckoutPage() {
                 value={apartment}
                 onChange={(e) => setApartment(e.target.value)}
                 placeholder="42"
-                className="mt-1 w-full py-2.5 px-3 bg-tg-bg rounded-xl text-sm text-tg-text text-center 
-                           border border-white/5 focus:border-tg-button/40 transition-colors"
+                className="mt-1.5 w-full py-3 px-3 bg-gray-50 rounded-xl text-[15px] text-gray-900 font-medium text-center 
+                           border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
               />
             </div>
           </div>
 
-          <div className="px-4 pb-4">
-            <label className="text-[11px] text-tg-hint font-medium uppercase tracking-wide">
+          <div className="px-5 pb-5">
+            <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">
               Комментарий
             </label>
             <textarea
@@ -252,25 +252,25 @@ export default function CheckoutPage() {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Код домофона, пожелания..."
               rows={2}
-              className="mt-1 w-full py-2.5 px-3 bg-tg-bg rounded-xl text-sm text-tg-text resize-none
-                         border border-white/5 focus:border-tg-button/40 transition-colors placeholder:text-tg-hint/50"
+              className="mt-1.5 w-full py-3 px-4 bg-gray-50 rounded-xl text-[15px] text-gray-900 font-medium resize-none
+                         border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-gray-400"
             />
           </div>
         </div>
 
         {/* Summary */}
-        <div className="bg-tg-secondary-bg rounded-2xl p-4 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-tg-hint">Товары</span>
-            <span className="text-tg-text">{subtotal.toLocaleString()} ₸</span>
+        <div className="bg-white px-5 py-4 rounded-3xl shadow-sm border border-gray-100 space-y-3">
+          <div className="flex justify-between text-[15px] font-medium">
+            <span className="text-gray-500">Товары</span>
+            <span className="text-gray-900">{subtotal.toLocaleString()} ₸</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-tg-hint">Доставка</span>
-            <span className="text-tg-text">{DELIVERY_FEE} ₸</span>
+          <div className="flex justify-between text-[15px] font-medium">
+            <span className="text-gray-500">Доставка</span>
+            <span className="text-gray-900">{DELIVERY_FEE} ₸</span>
           </div>
-          <div className="border-t border-white/5 pt-2 mt-2 flex justify-between">
-            <span className="text-tg-text font-bold">Итого</span>
-            <span className="text-tg-text font-bold text-lg">{total.toLocaleString()} ₸</span>
+          <div className="border-t border-gray-100 pt-3 mt-3 flex justify-between">
+            <span className="text-gray-900 font-bold text-lg">Итого</span>
+            <span className="text-gray-900 font-bold text-xl">{total.toLocaleString()} ₸</span>
           </div>
         </div>
 
@@ -278,9 +278,9 @@ export default function CheckoutPage() {
         <button
           onClick={handleSubmit}
           disabled={!isValid || loading}
-          className="w-full py-4 bg-tg-button rounded-2xl text-tg-button-text font-semibold text-[15px]
-                     transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed
-                     shadow-lg shadow-tg-button/20 flex items-center justify-center gap-2"
+          className="w-full py-4 bg-primary rounded-2xl text-white font-semibold text-[16px]
+                     transition-transform active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed
+                     shadow-md shadow-primary/30 flex items-center justify-center gap-2 mt-2 hover:bg-secondary"
         >
           {loading && <Loader2 size={18} className="animate-spin" />}
           Заказать — {total.toLocaleString()} ₸

@@ -81,9 +81,14 @@ export class OrdersService {
 
     this.logger.log(`Order #${order.id} created, total: ${totalAmount} тг`);
 
-    // Send Telegram notification (fire-and-forget)
+    // Send Telegram notifications (fire-and-forget)
+    // 1. Notify shop about new order
     this.telegramService.notifyNewOrder(order).catch((err) => {
-      this.logger.error(`Failed to send Telegram notification: ${err.message}`);
+      this.logger.error(`Failed to send shop notification: ${err.message}`);
+    });
+    // 2. Confirm to client
+    this.telegramService.notifyOrderCreated(order).catch((err) => {
+      this.logger.error(`Failed to send client confirmation: ${err.message}`);
     });
 
     return order;
@@ -172,7 +177,7 @@ export class OrdersService {
       updateData.acceptedAt = new Date();
     }
 
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id },
       data: updateData,
       include: {
@@ -180,5 +185,19 @@ export class OrdersService {
         user: true,
       },
     });
+
+    this.logger.log(`Order #${id} status changed: ${order.status} → ${newStatus}`);
+
+    // Send notifications (fire-and-forget)
+    // 1. Notify client about status change
+    this.telegramService.notifyStatusChange(updated, newStatus).catch((err) => {
+      this.logger.error(`Failed to send client notification: ${err.message}`);
+    });
+    // 2. Notify shop about delivery completion
+    this.telegramService.notifyShopStatusChange(updated, newStatus).catch((err) => {
+      this.logger.error(`Failed to send shop notification: ${err.message}`);
+    });
+
+    return updated;
   }
 }

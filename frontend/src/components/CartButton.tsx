@@ -29,8 +29,8 @@ export default function CartButton({ onClick }: CartButtonProps) {
         <div className="flex items-center gap-3">
           <div className="relative">
             <ShoppingCart size={22} className="text-tg-button-text" />
-            <div className="absolute -top-2 -right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center">
-              <span className="text-tg-button text-[10px] font-bold">{count}</span>
+            <div className="absolute -top-2 -right-2 w-5 h-5 bg-accent rounded-full flex items-center justify-center shadow-sm">
+              <span className="text-gray-900 text-[11px] font-extrabold">{count}</span>
             </div>
           </div>
           <span className="text-tg-button-text font-semibold text-[15px]">

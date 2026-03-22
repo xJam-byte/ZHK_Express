@@ -66,60 +66,60 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <div className="sticky top-0 z-40 bg-tg-bg/80 backdrop-blur-xl border-b border-white/5 px-4 py-4">
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm px-4 py-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/')}
-            className="w-9 h-9 rounded-full bg-tg-secondary-bg flex items-center justify-center"
+            className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
           >
-            <ArrowLeft size={18} className="text-tg-hint" />
+            <ArrowLeft size={20} className="text-gray-800" />
           </button>
-          <h1 className="text-lg font-bold text-tg-text">Мои заказы</h1>
+          <h1 className="text-xl font-bold text-gray-900">Мои заказы</h1>
         </div>
       </div>
 
       <div className="px-4 pt-4 space-y-3">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 size={32} className="text-tg-button animate-spin" />
+            <Loader2 size={32} className="text-primary animate-spin" />
           </div>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Package size={48} className="text-tg-hint/40" />
-            <p className="text-tg-hint text-sm">Заказов пока нет</p>
+            <Package size={48} className="text-gray-300" />
+            <p className="text-gray-500 text-[15px] font-medium">Заказов пока нет</p>
           </div>
         ) : (
           orders.map((order: any) => (
             <button
               key={order.id}
               onClick={() => router.push(`/orders/${order.id}`)}
-              className="w-full bg-tg-secondary-bg rounded-2xl p-4 text-left transition-transform active:scale-[0.98]"
+              className="w-full bg-white border border-gray-100 shadow-sm hover:shadow-md rounded-3xl p-5 text-left transition-all active:scale-[0.98]"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-tg-text font-semibold">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-gray-900 font-bold text-[15px]">
                   Заказ #{order.id}
                 </span>
                 <span
-                  className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[order.status] || ''}`}
+                  className={`text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${STATUS_COLORS[order.status] || ''}`}
                 >
                   {STATUS_LABELS[order.status] || order.status}
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 text-tg-hint text-xs mb-2">
-                <Clock size={12} />
+              <div className="flex items-center gap-1.5 text-gray-500 text-[13px] font-medium mb-2.5">
+                <Clock size={14} />
                 <span>{formatDate(order.createdAt)}</span>
               </div>
 
-              <div className="text-tg-hint text-xs mb-2">
-                {order.items?.length || 0} товаров
+              <div className="text-gray-500 text-[13px] font-medium mb-3">
+                {order.items?.length || 0} {order.items?.length === 1 ? 'товар' : 'товаров'}
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-tg-text font-bold">
-                  {order.totalAmount} ₸
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <span className="text-gray-900 font-bold text-lg">
+                  {order.totalAmount.toLocaleString()} ₸
                 </span>
-                <ChevronRight size={16} className="text-tg-hint" />
+                <ChevronRight size={18} className="text-gray-400" />
               </div>
             </button>
           ))
