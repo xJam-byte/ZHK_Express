@@ -17,4 +17,9 @@ export class DashboardController {
   async getDashboard() {
     return this.dashboardService.getDashboard();
   }
+
+  @Get('export/orders')
+  async exportOrders() {
+    return this.dashboardService.exportOrders();
+  }
 }

@@ -42,6 +42,36 @@ model Shop {
   @@map("shops")
 }
 
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  nameKk    String?  @map("name_kk")
+  nameEn    String?  @map("name_en")
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model PromoCode {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique
+  type           PromoType
+  value          Float
+  minOrderAmount Float?    @map("min_order_amount")
+  maxUses        Int?      @map("max_uses")
+  usedCount      Int       @default(0) @map("used_count")
+  isActive       Boolean   @default(true) @map("is_active")
+  expiresAt      DateTime? @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  orders Order[]
+
+  @@map("promo_codes")
+}
+
 model User {
   id             Int      @id @default(autoincrement())
   telegramId     BigInt   @unique @map("telegram_id")
@@ -65,38 +95,60 @@ model User {
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  price     Float
-  imageUrl  String?  @map("image_url")
-  stock     Int      @default(0)
-  isActive  Boolean  @default(true) @map("is_active")
-  shopId    Int?     @map("shop_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  price      Float
+  imageUrl   String?  @map("image_url")
+  stock      Int      @default(0)
+  isActive   Boolean  @default(true) @map("is_active")
+  shopId     Int?     @map("shop_id")
+  categoryId Int?     @map("category_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   shop       Shop?       @relation(fields: [shopId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
+  wishlisted Wishlist[]
 
   @@map("products")
+}
+
+model Wishlist {
+  userId    Int @map("user_id")
+  productId Int @map("product_id")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId])
+  @@map("wishlists")
 }
 
 model Order {
   id              Int         @id @default(autoincrement())
   userId          Int         @map("user_id")
   shopId          Int?        @map("shop_id")
+  promoCodeId     Int?        @map("promo_code_id")
   status          OrderStatus @default(PENDING)
   totalAmount     Float       @map("total_amount")
   deliveryFee     Float       @default(200) @map("delivery_fee")
+  discountAmount  Float       @default(0) @map("discount_amount")
   deliveryAddress String      @map("delivery_address")
   entrance        String?
   floor           String?
   apartment       String?
   comment         String?
+  rating          Int?
+  review          String?
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
   acceptedAt      DateTime?   @map("accepted_at")
+  deliveredAt     DateTime?   @map("delivered_at")
 
+  user      User        @relation(fields: [userId], references: [id])
+  shop      Shop?       @relation(fields: [shopId], references: [id])
+  promoCode PromoCode?  @relation(fields: [promoCodeId], references: [id])
+  items     OrderItem[]
   user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   shop  Shop?       @relation(fields: [shopId], references: [id], onDelete: SetNull)
   items OrderItem[]

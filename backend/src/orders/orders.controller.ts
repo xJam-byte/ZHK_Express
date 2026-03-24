@@ -38,8 +38,11 @@ export class OrdersController {
   }
 
   @Get(':id')
-  async getOrderById(@Param('id', ParseIntPipe) id: number) {
-    return this.ordersService.getOrderById(id);
+  async getOrderById(
+    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.ordersService.getOrderById(id, req.user.id, req.user.role);
   }
 
   @Patch(':id/status')
@@ -49,5 +52,15 @@ export class OrdersController {
     @Body('status') status: OrderStatus,
   ) {
     return this.ordersService.updateStatus(id, status);
+  }
+
+  @Patch(':id/rate')
+  async rateOrder(
+    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Body('rating') rating: number,
+    @Body('review') review?: string,
+  ) {
+    return this.ordersService.rateOrder(id, req.user.id, rating, review);
   }
 }
