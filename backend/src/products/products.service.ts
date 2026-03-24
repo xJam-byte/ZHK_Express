@@ -2,11 +2,14 @@ import {
   Injectable,
   Logger,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Readable } from 'stream';
 import * as csvParser from 'csv-parser';
 import * as XLSX from 'xlsx';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 interface ImportRow {
   name: string;
@@ -26,9 +29,20 @@ export interface ImportResult {
 export class ProductsService {
   private readonly logger = new Logger(ProductsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async findAll(onlyActive = true) {
+    const cacheKey = `products_active_${onlyActive}`;
+    const cachedProducts = await this.cacheManager.get(cacheKey);
+    
+    if (cachedProducts) {
+      this.logger.debug(`Cache hit for key: ${cacheKey}`);
+      return cachedProducts;
+    }
+
     const where: any = {};
     if (onlyActive) {
       where.isActive = true;
@@ -57,6 +71,41 @@ export class ProductsService {
 
   async findById(id: number) {
     return this.prisma.product.findUnique({ where: { id } });
+  }
+
+  async create(name: string, price: number, imageUrl?: string, stock?: number, isActive = true, shopId?: number) {
+    const created = await this.prisma.product.create({
+      data: {
+        name,
+        price,
+        imageUrl,
+        stock,
+        isActive,
+        shopId,
+      },
+    });
+    
+    await this.invalidateProductsCache();
+    return created;
+  }
+
+  async update(id: number, updateProductDto: { name?: string; price?: number; imageUrl?: string; stock?: number; isActive?: boolean }) {
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: updateProductDto,
+    });
+    
+    await this.invalidateProductsCache();
+    return updated;
+  }
+
+  async remove(id: number) {
+    const removed = await this.prisma.product.delete({
+      where: { id },
+    });
+
+    await this.invalidateProductsCache();
+    return removed;
   }
 
   async getShopByUserId(userId: number) {
@@ -218,5 +267,10 @@ export class ProductsService {
 
   async deleteProduct(id: number) {
     return this.prisma.product.delete({ where: { id } });
+  }
+
+  private async invalidateProductsCache() {
+    await this.cacheManager.del('products_active_true');
+    await this.cacheManager.del('products_active_false');
   }
 }

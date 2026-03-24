@@ -7,9 +7,17 @@ import { TelegramModule } from './telegram/telegram.module';
 import { ComplexesModule } from './complexes/complexes.module';
 import { ShopsModule } from './shops/shops.module';
 import { AdminModule } from './admin/admin.module';
+import { RedisCacheModule } from './redis/redis.module';
+import { CategoriesModule } from './categories/categories.module';
+import { WishlistModule } from './wishlist/wishlist.module';
+import { PromocodesModule } from './promocodes/promocodes.module';
 
 @Module({
   imports: [
+    RedisCacheModule,
+    CategoriesModule,
+    WishlistModule,
+    PromocodesModule,
     PrismaModule,
     AuthModule,
     ProductsModule,
