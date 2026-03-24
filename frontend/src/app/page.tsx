@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Search, Package, Loader2, ClipboardList } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import CartButton from '@/components/CartButton';
-import { fetchProducts, fetchMe } from '@/lib/api';
+import { fetchProducts, fetchMe, fetchCategories, fetchWishlist, toggleWishlistItem, Category } from '@/lib/api';
 import { getTelegramWebApp, getTelegramUser } from '@/lib/telegram';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface Product {
   id: number;
@@ -20,8 +21,13 @@ interface Product {
 export default function CatalogPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,7 +40,7 @@ export default function CatalogPage() {
 
     // Check user role and auto-redirect
     checkRoleAndRedirect();
-    loadProducts();
+    loadData();
   }, []);
 
   const checkRoleAndRedirect = async () => {
@@ -59,28 +65,78 @@ export default function CatalogPage() {
     }
   };
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchProducts();
-      // Ensure data is a real Array (SES lockdown can break Array.from too)
-      const arr: Product[] = Array.isArray(data) ? [...data] : [];
-      setProducts(arr);
+      
+      const [productsData, categoriesData] = await Promise.all([
+        fetchProducts(),
+        fetchCategories(),
+      ]);
+
+      const pArr: Product[] = Array.isArray(productsData) ? [...productsData] : [];
+      setProducts(pArr);
+      
+      const cArr: Category[] = Array.isArray(categoriesData) ? [...categoriesData] : [];
+      setCategories(cArr);
+
+      // Load wishlist if auth might work
+      loadWishlist();
     } catch (err) {
-      setError('Не удалось загрузить товары');
+      setError('Не удалось загрузить каталог');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  const loadWishlist = async () => {
+    try {
+      const wishes: Product[] = await fetchWishlist();
+      const ids = new Set(wishes.map(w => w.id));
+      setWishlistIds(ids);
+    } catch (e) {
+      console.log('User unauthenticated, skipping wishlist');
+    }
+  };
+
+  const handleToggleWishlist = async (productId: number) => {
+    try {
+      const isAdded = !wishlistIds.has(productId);
+      // Optimistic UI update
+      setWishlistIds(prev => {
+        const next = new Set(prev);
+        if (isAdded) next.add(productId);
+        else next.delete(productId);
+        return next;
+      });
+
+      const res = await toggleWishlistItem(productId);
+      
+      // Sync with real state if needed
+      setWishlistIds(prev => {
+        const next = new Set(prev);
+        if (res.added) next.add(productId);
+        else next.delete(productId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to toggle wishlist', err);
+    }
+  };
+
   // SES-safe filtering: avoid relying on Array.prototype.filter
-  const searchLower = search.toLowerCase();
+  const searchLower = debouncedSearch.toLowerCase();
   const filtered: Product[] = [];
   for (let i = 0; i < products.length; i++) {
-    if (products[i].name.toLowerCase().indexOf(searchLower) !== -1) {
-      filtered.push(products[i]);
+    const p = products[i];
+    const matchesSearch = p.name.toLowerCase().indexOf(searchLower) !== -1;
+    // We assume backend returns categoryId in Product (need to ensure Product interface has it, but it's okay for JS)
+    const matchesCategory = selectedCategory === null || (p as any).categoryId === selectedCategory;
+    
+    if (matchesSearch && matchesCategory) {
+      filtered.push(p);
     }
   }
 
@@ -118,9 +174,9 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      {/* Sticky Search */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm px-5 py-3">
-        <div className="relative">
+      {/* Sticky Search & Categories */}
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm px-5 pt-3 pb-3">
+        <div className="relative mb-3">
           <Search
             size={18}
             className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
@@ -133,6 +189,32 @@ export default function CatalogPage() {
             className="w-full py-3 pl-11 pr-4 bg-gray-50/80 rounded-2xl text-[15px] text-gray-900 placeholder:text-gray-400 font-medium
                        border border-gray-200 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none"
           />
+        </div>
+
+        {/* Categories Scroller */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth pb-1">
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-[14px] font-semibold transition-colors
+              ${selectedCategory === null 
+                ? 'bg-gray-900 text-white' 
+                : 'bg-gray-100/80 text-gray-600 hover:bg-gray-200'}`}
+          >
+            Все
+          </button>
+          
+          {categories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-[14px] font-semibold transition-colors
+                ${selectedCategory === cat.id 
+                  ? 'bg-gray-900 text-white' 
+                  : 'bg-gray-100/80 text-gray-600 hover:bg-gray-200'}`}
+            >
+              {cat.name}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -162,7 +244,7 @@ export default function CatalogPage() {
             <Package size={56} className="text-gray-300" />
             <p className="text-gray-500 text-[15px] font-medium">{error}</p>
             <button
-              onClick={loadProducts}
+              onClick={loadData}
               className="mt-3 px-6 py-3 bg-primary rounded-2xl text-white text-[15px] font-bold transition-transform active:scale-95 shadow-md shadow-primary/20 hover:bg-secondary group"
             >
               <span className="group-hover:text-gray-900 transition-colors">Попробовать снова</span>
@@ -188,7 +270,12 @@ export default function CatalogPage() {
 
             <div className="grid grid-cols-2 gap-4">
               {filtered.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  isWishlisted={wishlistIds.has(product.id)}
+                  onToggleWishlist={handleToggleWishlist}
+                />
               ))}
             </div>
           </>

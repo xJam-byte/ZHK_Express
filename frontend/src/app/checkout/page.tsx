@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Minus, Plus, Trash2, MapPin, Loader2 } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Trash2, MapPin, Loader2, Tag, CheckCircle2 } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
-import { createOrder } from '@/lib/api';
+import { createOrder, validatePromoCode } from '@/lib/api';
 import { getTelegramWebApp, hapticFeedback, hapticNotification } from '@/lib/telegram';
 
 const DELIVERY_FEE = 200;
@@ -19,9 +19,50 @@ export default function CheckoutPage() {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Promo code states
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
   const subtotal = totalAmount();
-  const total = subtotal + DELIVERY_FEE;
+  
+  // Calculate discounts
+  let discountAmount = 0;
+  let finalDeliveryFee = DELIVERY_FEE;
+
+  if (appliedPromo) {
+    if (appliedPromo.type === 'PERCENT') {
+      discountAmount = (subtotal * appliedPromo.value) / 100;
+    } else if (appliedPromo.type === 'FIXED') {
+      discountAmount = appliedPromo.value;
+    } else if (appliedPromo.type === 'FREE_DELIVERY') {
+      finalDeliveryFee = 0;
+    }
+    if (discountAmount > subtotal) {
+      discountAmount = subtotal;
+    }
+  }
+
+  const total = subtotal - discountAmount + finalDeliveryFee;
   const isValid = entrance.trim() && floor.trim() && apartment.trim() && items.length > 0;
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    try {
+      setPromoLoading(true);
+      setPromoError(null);
+      const promo = await validatePromoCode(promoInput.trim(), subtotal);
+      setAppliedPromo(promo);
+      hapticNotification('success');
+    } catch (err: any) {
+      setPromoError(err.response?.data?.message || 'Неверный промокод');
+      setAppliedPromo(null);
+      hapticNotification('error');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
 
   const handleSubmit = useCallback(async () => {
     if (!isValid || loading) return;
@@ -40,6 +81,7 @@ export default function CheckoutPage() {
         floor: floor.trim(),
         apartment: apartment.trim(),
         comment: comment.trim() || undefined,
+        ...(appliedPromo ? { promoCode: appliedPromo.code } : {}),
       });
 
       hapticNotification('success');
@@ -263,6 +305,64 @@ export default function CheckoutPage() {
           </div>
         </div>
 
+        {/* Promo Code */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-5 flex flex-col gap-3">
+            <label className="text-[13px] text-gray-900 font-bold flex items-center gap-2">
+              <Tag size={16} className="text-primary" />
+              Промокод
+            </label>
+            
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={promoInput}
+                onChange={(e) => {
+                  setPromoInput(e.target.value.toUpperCase());
+                  setPromoError(null);
+                }}
+                disabled={!!appliedPromo || promoLoading}
+                placeholder="PROMO2024"
+                className="flex-1 py-3 px-4 bg-gray-50 rounded-xl text-[15px] uppercase font-bold text-gray-900
+                           border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none disabled:opacity-60"
+              />
+              {!appliedPromo ? (
+                <button
+                  onClick={handleApplyPromo}
+                  disabled={!promoInput || promoLoading}
+                  className="px-5 py-3 bg-gray-900 text-white rounded-xl font-bold text-[14px] 
+                             disabled:opacity-50 transition-transform active:scale-95 flex items-center justify-center min-w-[100px]"
+                >
+                  {promoLoading ? <Loader2 size={18} className="animate-spin" /> : 'Ввод'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setAppliedPromo(null);
+                    setPromoInput('');
+                  }}
+                  className="px-5 py-3 bg-red-50 text-red-500 rounded-xl font-bold text-[14px] 
+                             transition-transform active:scale-95 border border-red-100"
+                >
+                  Удалить
+                </button>
+              )}
+            </div>
+            
+            {promoError && (
+              <p className="text-[13px] text-red-500 font-medium animate-fade-in pl-1">
+                {promoError}
+              </p>
+            )}
+            {appliedPromo && (
+              <p className="text-[13px] text-green-600 font-medium animate-fade-in pl-1 flex items-center gap-1.5">
+                <CheckCircle2 size={14} />
+                Промокод успешно применён!
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Summary */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6">
           <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -276,8 +376,17 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between text-[15px]">
               <span className="text-gray-500 font-medium">Доставка</span>
-              <span className="text-gray-900 font-bold">{DELIVERY_FEE.toLocaleString()} ₸</span>
+              <span className={finalDeliveryFee === 0 ? "text-green-600 font-bold" : "text-gray-900 font-bold"}>
+                {finalDeliveryFee === 0 ? 'Бесплатно' : `${finalDeliveryFee.toLocaleString()} ₸`}
+              </span>
             </div>
+            
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-[15px] text-primary font-bold animate-fade-in">
+                <span>Скидка</span>
+                <span>-{discountAmount.toLocaleString()} ₸</span>
+              </div>
+            )}
 
             <div className="pt-4 mt-2 border-t border-gray-100 border-dashed flex justify-between items-center">
               <span className="text-[16px] font-bold text-gray-900">К оплате</span>
