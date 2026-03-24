@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Heart } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { hapticFeedback } from '@/lib/telegram';
 
@@ -12,7 +12,13 @@ interface Product {
   stock: number;
 }
 
-export default function ProductCard({ product }: { product: Product }) {
+interface ProductCardProps {
+  product: Product;
+  isWishlisted?: boolean;
+  onToggleWishlist?: (id: number) => void;
+}
+
+export default function ProductCard({ product, isWishlisted = false, onToggleWishlist }: ProductCardProps) {
   const { addItem, decrementItem, getItemQuantity } = useCartStore();
   const quantity = getItemQuantity(product.id);
 
@@ -27,7 +33,21 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="bg-white rounded-3xl overflow-hidden animate-fade-in transition-transform shadow-sm hover:shadow-md border border-gray-100 flex flex-col h-full">
+    <div className="bg-white rounded-3xl overflow-hidden animate-fade-in transition-transform shadow-sm hover:shadow-md border border-gray-100 flex flex-col h-full relative">
+      <button 
+        onClick={(e) => {
+          e.preventDefault();
+          onToggleWishlist?.(product.id);
+          hapticFeedback('light');
+        }}
+        className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center shadow-sm transition-transform active:scale-90"
+      >
+        <Heart 
+          size={16} 
+          className={isWishlisted ? "fill-red-500 text-red-500" : "text-gray-400"} 
+        />
+      </button>
+
       {/* Product Image */}
       <div className="relative aspect-[4/3] bg-gray-50/50 w-full overflow-hidden flex-shrink-0">
         {product.imageUrl ? (
@@ -46,7 +66,7 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
 
         {product.stock <= 3 && product.stock > 0 && (
-          <div className="absolute top-2 left-2 px-2 py-0.5 bg-orange-500/90 text-white text-[10px] font-semibold rounded-full backdrop-blur-sm">
+          <div className="absolute top-2 left-2 px-2 py-0.5 bg-orange-500/90 text-white text-[10px] font-semibold rounded-full backdrop-blur-sm z-10">
             Осталось {product.stock}
           </div>
         )}

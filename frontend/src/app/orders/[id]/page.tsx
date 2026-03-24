@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Loader2, MapPin, MessageSquare, CheckCircle2, Clock, Package, Truck, ShoppingBag, XCircle } from 'lucide-react';
-import { fetchOrderById } from '@/lib/api';
-import { getTelegramWebApp } from '@/lib/telegram';
+import { ArrowLeft, Loader2, MapPin, MessageSquare, CheckCircle2, Clock, Package, Truck, ShoppingBag, XCircle, Star } from 'lucide-react';
+import { fetchOrderById, rateOrder } from '@/lib/api';
+import { getTelegramWebApp, hapticFeedback, hapticNotification } from '@/lib/telegram';
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
   PENDING: { label: 'Ожидает подтверждения', icon: Clock, color: 'text-yellow-400' },
@@ -25,6 +25,11 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Rating state
+  const [rating, setRating] = useState(0);
+  const [review, setReview] = useState('');
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
   useEffect(() => {
     const webapp = getTelegramWebApp();
     if (webapp) {
@@ -33,13 +38,29 @@ export default function OrderTrackingPage() {
       webapp.BackButton?.onClick(() => router.push('/orders'));
     }
     loadOrder();
-    // Auto-refresh every 10s
+    // Auto-refresh every 10s if not rating
     const interval = setInterval(loadOrder, 10000);
     return () => {
       clearInterval(interval);
       webapp?.BackButton?.hide();
     };
   }, [orderId]);
+
+  const handleRateSubmit = async () => {
+    if (rating < 1 || isSubmittingRating) return;
+    try {
+      setIsSubmittingRating(true);
+      await rateOrder(orderId, rating, review.trim());
+      hapticNotification('success');
+      // Update local state to show it's rated
+      setOrder((prev: any) => ({ ...prev, rating, review: review.trim() }));
+    } catch (err) {
+      console.error(err);
+      hapticNotification('error');
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
 
   const loadOrder = async () => {
     try {
@@ -144,7 +165,6 @@ export default function OrderTrackingPage() {
         </div>
 
         {/* Order Items */}
-        {/* Order Items */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
             <h2 className="text-[16px] font-extrabold text-gray-900 tracking-tight">Состав заказа</h2>
@@ -181,6 +201,67 @@ export default function OrderTrackingPage() {
             </div>
           </div>
         </div>
+
+        {/* Rating Section */}
+        {order.status === 'DELIVERED' && (
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 mt-4">
+            <h3 className="text-[16px] font-extrabold text-gray-900 tracking-tight text-center mb-4">
+              {order.rating ? 'Ваша оценка' : 'Оцените заказ'}
+            </h3>
+            
+            <div className="flex justify-center gap-2 mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  disabled={!!order.rating || isSubmittingRating}
+                  onClick={() => {
+                    setRating(star);
+                    hapticFeedback('light');
+                  }}
+                  className="transition-transform active:scale-90 disabled:cursor-default"
+                >
+                  <Star 
+                    size={32} 
+                    className={`transition-colors ${
+                      (order.rating || rating) >= star 
+                        ? 'fill-yellow-400 text-yellow-400' 
+                        : 'text-gray-200'
+                    }`} 
+                  />
+                </button>
+              ))}
+            </div>
+
+            {!order.rating && (
+              <div className="animate-fade-in flex flex-col gap-3">
+                <textarea
+                  value={review}
+                  onChange={(e) => setReview(e.target.value)}
+                  placeholder="Напишите отзыв (необязательно)"
+                  disabled={isSubmittingRating}
+                  rows={2}
+                  className="w-full py-3 px-4 bg-gray-50 rounded-xl text-[14px] text-gray-900 resize-none
+                             border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                />
+                <button
+                  onClick={handleRateSubmit}
+                  disabled={rating < 1 || isSubmittingRating}
+                  className="w-full py-3.5 bg-primary rounded-xl text-white font-bold text-[15px]
+                             disabled:opacity-50 transition-transform active:scale-95 flex items-center justify-center"
+                >
+                  {isSubmittingRating ? <Loader2 size={18} className="animate-spin" /> : 'Отправить'}
+                </button>
+              </div>
+            )}
+            
+            {order.rating && order.review && (
+              <p className="text-[14px] text-gray-600 font-medium text-center bg-gray-50 p-3 rounded-xl border border-gray-100 mt-2">
+                &ldquo;{order.review}&rdquo;
+              </p>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );

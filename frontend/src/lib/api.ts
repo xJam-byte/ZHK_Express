@@ -120,6 +120,7 @@ export interface CreateOrderPayload {
   floor: string;
   apartment: string;
   comment?: string;
+  promoCode?: string;
 }
 
 export const createOrder = (data: CreateOrderPayload) =>
@@ -136,6 +137,13 @@ export const fetchOrderById = (id: number) =>
 export const updateOrderStatus = (id: number, status: string) =>
   api.patch(`/orders/${id}/status`, { status }).then((r) => r.data);
 
+export const rateOrder = (id: number, rating: number, review?: string) =>
+  api.patch(`/orders/${id}/rate`, { rating, review }).then((r) => r.data);
+
+// --- Promo Codes ---
+export const validatePromoCode = (code: string, orderAmount: number) =>
+  api.post("/promo/validate", { code, orderAmount }).then((r) => r.data);
+
 // --- Admin Dashboard ---
 export interface DashboardData {
   totalRevenue: number;
@@ -150,7 +158,10 @@ export interface DashboardData {
   totalClients: number;
   activeShops: number;
   suspendedShops: number;
-  shops: ShopStats[];
+  shops: any[];
+  salesTrend?: { date: string; amount: number }[];
+  topProducts?: { name: string; quantity: number }[];
+  slaStats?: { name: string; value: number }[];
 }
 
 export interface ShopStats {
@@ -172,6 +183,9 @@ export interface ShopStats {
 export const fetchDashboard = (): Promise<DashboardData> =>
   api.get("/admin/dashboard").then((r) => r.data);
 
+export const exportOrders = () =>
+  api.get("/admin/export/orders").then((r) => r.data);
+
 // --- Admin Shops ---
 export const fetchShops = () =>
   api.get("/admin/shops").then((r) => r.data);
@@ -181,5 +195,24 @@ export const suspendShop = (id: number) =>
 
 export const resumeShop = (id: number) =>
   api.patch(`/admin/shops/${id}/resume`).then((r) => r.data);
+
+// --- Categories ---
+export interface Category {
+  id: number;
+  name: string;
+  nameKk?: string;
+  nameEn?: string;
+  imageUrl?: string;
+}
+
+export const fetchCategories = (): Promise<Category[]> =>
+  api.get("/categories").then((r) => r.data);
+
+// --- Wishlist ---
+export const fetchWishlist = () =>
+  api.get("/wishlist").then((r) => r.data);
+
+export const toggleWishlistItem = (productId: number) =>
+  api.post(`/wishlist/${productId}/toggle`).then((r) => r.data);
 
 export default api;

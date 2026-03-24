@@ -18,6 +18,7 @@ import {
   Check,
   X,
   Package,
+  Clock, // <-- Needed for SLA stats
 } from 'lucide-react';
 import {
   fetchDashboard,
@@ -25,8 +26,10 @@ import {
   suspendShop,
   resumeShop,
   importProducts,
+  exportOrders,
   DashboardData,
 } from '@/lib/api';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { hapticFeedback, hapticNotification } from '@/lib/telegram';
 
 type Tab = 'analytics' | 'shops' | 'import';
@@ -94,6 +97,45 @@ export default function AdminPage() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      hapticFeedback('medium');
+      const orders = await exportOrders();
+      
+      const headers = ['ID', 'Дата', 'Сумма', 'Доставка', 'Скидка', 'Промокод', 'Статус', 'Клиент', 'Адрес'];
+      const rows = orders.map((o: any) => [
+        o.id,
+        new Date(o.createdAt).toLocaleString('ru-RU'),
+        o.totalAmount,
+        o.deliveryFee,
+        o.discountAmount,
+        o.promoCode?.code || '',
+        o.status,
+        `${o.user?.firstName || ''} ${o.user?.lastName || ''}`.trim(),
+        o.deliveryAddress
+      ]);
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((r: any[]) => r.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+      
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      hapticNotification('success');
+    } catch (err) {
+      console.error(err);
+      hapticNotification('error');
+    }
+  };
+
   // Import handlers
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -147,9 +189,20 @@ export default function AdminPage() {
     <div className="min-h-screen pb-8 page-enter">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-tg-bg/80 backdrop-blur-xl border-b border-white/5">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-bold text-tg-text">Панель управления</h1>
-          <p className="text-xs text-tg-hint mt-0.5">Администратор</p>
+        <div className="px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-tg-text">Панель управления</h1>
+            <p className="text-xs text-tg-hint mt-0.5">Администратор</p>
+          </div>
+          {tab === 'analytics' && (
+            <button
+              onClick={handleExport}
+              className="px-3 py-1.5 bg-tg-button/10 text-tg-button text-[11px] font-bold rounded-lg flex items-center gap-1.5 transition-colors active:scale-95"
+            >
+              <FileSpreadsheet size={14} />
+              Экспорт CSV
+            </button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -276,6 +329,133 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Charts Area */}
+                {dashboard.salesTrend && dashboard.salesTrend.length > 0 && (
+                  <div className="bg-tg-secondary-bg rounded-2xl p-4">
+                    <h3 className="text-sm font-semibold text-tg-text mb-3 flex items-center gap-2">
+                      <TrendingUp size={16} className="text-tg-button" />
+                      Динамика продаж (30 дней)
+                    </h3>
+                    <div className="h-44 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={dashboard.salesTrend}>
+                          <defs>
+                            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#4ADE80" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="#4ADE80" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={(tick) => tick.slice(5)} 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fontSize: 10, fill: '#8e8e93'}} 
+                            dy={10}
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fontSize: 10, fill: '#8e8e93'}}
+                            width={40}
+                            tickFormatter={(val) => val > 1000 ? `${(val/1000).toFixed(0)}k` : val}
+                          />
+                          <RechartsTooltip 
+                            contentStyle={{ backgroundColor: '#1c1c1e', border: 'none', borderRadius: '8px', fontSize: '12px' }}
+                            itemStyle={{ color: '#4ADE80', fontWeight: 'bold' }}
+                            formatter={(value: any) => [`${value?.toLocaleString() || value} ₸`, '']}
+                            labelStyle={{ color: '#8e8e93', marginBottom: '4px' }}
+                          />
+                          <Area type="monotone" dataKey="amount" stroke="#4ADE80" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {dashboard.topProducts && dashboard.topProducts.length > 0 && (
+                  <div className="bg-tg-secondary-bg rounded-2xl p-4">
+                    <h3 className="text-sm font-semibold text-tg-text mb-3 flex items-center gap-2">
+                      <BarChart3 size={16} className="text-tg-button" />
+                      Топ 5 товаров
+                    </h3>
+                    <div className="h-44 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={dashboard.topProducts} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            dataKey="name" 
+                            type="category" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fontSize: 10, fill: '#8e8e93'}} 
+                            width={90}
+                          />
+                          <RechartsTooltip 
+                            cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                            contentStyle={{ backgroundColor: '#1c1c1e', border: 'none', borderRadius: '8px', fontSize: '12px' }}
+                            itemStyle={{ color: '#60A5FA', fontWeight: 'bold' }}
+                            formatter={(value: any) => [value, 'шт']}
+                          />
+                          <Bar dataKey="quantity" fill="#60A5FA" radius={[0, 4, 4, 0]} barSize={16}>
+                            {dashboard.topProducts.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#DBEAFE'][index % 5]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {dashboard.slaStats && dashboard.slaStats.length > 0 && (
+                  <div className="bg-tg-secondary-bg rounded-2xl p-4">
+                    <h3 className="text-sm font-semibold text-tg-text mb-3 flex items-center gap-2">
+                      <Clock size={16} className="text-tg-button" />
+                      SLA доставки
+                    </h3>
+                    <div className="h-44 w-full flex items-center justify-center">
+                      <ResponsiveContainer width="50%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={dashboard.slaStats}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={30}
+                            outerRadius={50}
+                            paddingAngle={2}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {dashboard.slaStats.map((entry, index) => {
+                              const colors = ['#4ADE80', '#FBBF24', '#F87171'];
+                              return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                            })}
+                          </Pie>
+                          <RechartsTooltip 
+                            contentStyle={{ backgroundColor: '#1c1c1e', border: 'none', borderRadius: '8px', fontSize: '12px' }}
+                            itemStyle={{ fontWeight: 'bold' }}
+                            formatter={(value: any) => [value, 'заказов']}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="w-1/2 flex flex-col justify-center gap-2 pl-4">
+                        {dashboard.slaStats.map((stat, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-1.5">
+                              <div className={`w-2.5 h-2.5 rounded-full`} style={{ backgroundColor: ['#4ADE80', '#FBBF24', '#F87171'][i % 3] }} />
+                              <span className="text-tg-hint">{stat.name}</span>
+                            </div>
+                            <span className="font-bold text-tg-text">{stat.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Per-Shop Revenue */}
                 {dashboard.shops.length > 0 && (
