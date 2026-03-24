@@ -23,6 +23,12 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PromoType {
+  PERCENT
+  FIXED
+  FREE_DELIVERY
+}
+
 model Shop {
   id        Int      @id @default(autoincrement())
   name      String
@@ -90,6 +96,7 @@ model User {
   selectedShop Shop?  @relation("SelectedShop", fields: [selectedShopId], references: [id], onDelete: SetNull)
   orders       Order[]
   shop         Shop?
+  wishlist     Wishlist[]
 
   @@map("users")
 }
@@ -106,6 +113,7 @@ model Product {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  category   Category?   @relation(fields: [categoryId], references: [id])
   shop       Shop?       @relation(fields: [shopId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
   wishlisted Wishlist[]
@@ -145,13 +153,10 @@ model Order {
   acceptedAt      DateTime?   @map("accepted_at")
   deliveredAt     DateTime?   @map("delivered_at")
 
-  user      User        @relation(fields: [userId], references: [id])
-  shop      Shop?       @relation(fields: [shopId], references: [id])
   promoCode PromoCode?  @relation(fields: [promoCodeId], references: [id])
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop      Shop?       @relation(fields: [shopId], references: [id], onDelete: SetNull)
   items     OrderItem[]
-  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shop  Shop?       @relation(fields: [shopId], references: [id], onDelete: SetNull)
-  items OrderItem[]
 
   @@map("orders")
 }
