@@ -47,14 +47,11 @@ export class ProductsService {
     if (onlyActive) {
       where.isActive = true;
       // Only show products from active shops (or products without a shop)
-      where.OR = [
-        { shop: null },
-        { shop: { isActive: true } },
-      ];
+      where.OR = [{ shop: null }, { shop: { isActive: true } }];
     }
     return this.prisma.product.findMany({
       where,
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
   }
 
@@ -65,7 +62,7 @@ export class ProductsService {
     if (!shop) return [];
     return this.prisma.product.findMany({
       where: { shopId: shop.id },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
   }
 
@@ -112,22 +109,25 @@ export class ProductsService {
     return this.prisma.shop.findUnique({ where: { userId } });
   }
 
-  async importFromFile(file: Express.Multer.File, shopId?: number): Promise<ImportResult> {
-    const ext = file.originalname.split('.').pop()?.toLowerCase();
+  async importFromFile(
+    file: Express.Multer.File,
+    shopId?: number,
+  ): Promise<ImportResult> {
+    const ext = file.originalname.split(".").pop()?.toLowerCase();
 
     let rows: ImportRow[];
-    if (ext === 'csv') {
+    if (ext === "csv") {
       rows = await this.parseCsv(file.buffer);
-    } else if (ext === 'xlsx' || ext === 'xls') {
+    } else if (ext === "xlsx" || ext === "xls") {
       rows = this.parseExcel(file.buffer);
     } else {
       throw new BadRequestException(
-        'Unsupported file format. Use CSV or Excel (.xlsx/.xls)',
+        "Unsupported file format. Use CSV or Excel (.xlsx/.xls)",
       );
     }
 
     if (rows.length === 0) {
-      throw new BadRequestException('File is empty or has invalid format');
+      throw new BadRequestException("File is empty or has invalid format");
     }
 
     return this.upsertProducts(rows, shopId);
@@ -144,17 +144,17 @@ export class ProductsService {
             mapHeaders: ({ header }) => header.trim().toLowerCase(),
           }),
         )
-        .on('data', (row) => {
+        .on("data", (row) => {
           const parsed = this.normalizeRow(row);
           if (parsed) rows.push(parsed);
         })
-        .on('end', () => resolve(rows))
-        .on('error', (err) => reject(err));
+        .on("end", () => resolve(rows))
+        .on("error", (err) => reject(err));
     });
   }
 
   private parseExcel(buffer: Buffer): ImportRow[] {
-    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    const workbook = XLSX.read(buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
@@ -174,12 +174,11 @@ export class ProductsService {
 
   private normalizeRow(row: Record<string, any>): ImportRow | null {
     const name =
-      row['name'] || row['название'] || row['наименование'] || row['товар'];
-    const price =
-      row['price'] || row['цена'] || row['стоимость'];
+      row["name"] || row["название"] || row["наименование"] || row["товар"];
+    const price = row["price"] || row["цена"] || row["стоимость"];
     const stock =
-      row['stock'] || row['остаток'] || row['количество'] || row['кол-во'];
-    const imageUrl = row['image_url'] || row['изображение'] || row['фото'];
+      row["stock"] || row["остаток"] || row["количество"] || row["кол-во"];
+    const imageUrl = row["image_url"] || row["изображение"] || row["фото"];
 
     if (!name || price === undefined || price === null) {
       return null;
@@ -198,7 +197,10 @@ export class ProductsService {
     };
   }
 
-  private async upsertProducts(rows: ImportRow[], shopId?: number): Promise<ImportResult> {
+  private async upsertProducts(
+    rows: ImportRow[],
+    shopId?: number,
+  ): Promise<ImportResult> {
     const result: ImportResult = {
       total: rows.length,
       created: 0,
@@ -246,7 +248,7 @@ export class ProductsService {
 
     this.logger.log(
       `Import complete: ${result.created} created, ${result.updated} updated, ${result.errors.length} errors` +
-      (shopId ? ` (shopId: ${shopId})` : ''),
+        (shopId ? ` (shopId: ${shopId})` : ""),
     );
     return result;
   }
@@ -258,7 +260,10 @@ export class ProductsService {
     });
   }
 
-  async updateProduct(id: number, data: { price?: number; stock?: number; name?: string }) {
+  async updateProduct(
+    id: number,
+    data: { price?: number; stock?: number; name?: string },
+  ) {
     return this.prisma.product.update({
       where: { id },
       data,

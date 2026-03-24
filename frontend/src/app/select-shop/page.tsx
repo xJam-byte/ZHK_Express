@@ -7,28 +7,28 @@ import {
   Navigation,
   Loader2,
   ChevronRight,
-  Building2,
+  Store,
   Home,
   ArrowLeft,
   Check,
 } from 'lucide-react';
 import {
-  fetchComplexes,
-  resolveGeoComplex,
+  fetchActiveShops,
+  resolveGeoShop,
   saveUserAddress,
-  ResidentialComplex,
+  ShopInfo,
 } from '@/lib/api';
 import { getTelegramWebApp, hapticFeedback, hapticNotification } from '@/lib/telegram';
 
 type Step = 'select' | 'address';
 
-export default function SelectComplexPage() {
+export default function SelectShopPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>('select');
-  const [complexes, setComplexes] = useState<ResidentialComplex[]>([]);
+  const [shops, setShops] = useState<ShopInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [selectedComplex, setSelectedComplex] = useState<ResidentialComplex | null>(null);
+  const [selectedShop, setSelectedShop] = useState<ShopInfo | null>(null);
 
   // Address form
   const [entrance, setEntrance] = useState('');
@@ -43,16 +43,16 @@ export default function SelectComplexPage() {
       webapp.ready();
       webapp.expand();
     }
-    loadComplexes();
+    loadShops();
   }, []);
 
-  const loadComplexes = async () => {
+  const loadShops = async () => {
     try {
       setLoading(true);
-      const data = await fetchComplexes();
-      setComplexes(Array.isArray(data) ? [...data] : []);
+      const data = await fetchActiveShops();
+      setShops(Array.isArray(data) ? [...data] : []);
     } catch (err) {
-      console.error('Failed to load complexes', err);
+      console.error('Failed to load shops', err);
     } finally {
       setLoading(false);
     }
@@ -71,16 +71,16 @@ export default function SelectComplexPage() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          const result = await resolveGeoComplex(
+          const result = await resolveGeoShop(
             position.coords.latitude,
             position.coords.longitude,
           );
-          if (result.complex) {
-            setSelectedComplex(result.complex);
+          if (result.shop) {
+            setSelectedShop(result.shop);
             if (result.outOfRange) {
               const webapp = getTelegramWebApp();
               webapp?.showAlert(
-                `Ближайший ЖК — "${result.complex.name}" (${result.distance}м). Вы находитесь вне зоны покрытия, но мы выбрали ближайший.`,
+                `Ближайший магазин — "${result.shop.name}" (${result.distance}м). Вы находитесь вне зоны доставки, но мы выбрали ближайший.`,
               );
             }
             hapticNotification('success');
@@ -97,26 +97,26 @@ export default function SelectComplexPage() {
         setGeoLoading(false);
         hapticNotification('error');
         const webapp = getTelegramWebApp();
-        webapp?.showAlert('Не удалось получить геолокацию. Выберите ЖК из списка.');
+        webapp?.showAlert('Не удалось получить геолокацию. Выберите магазин из списка.');
         console.error('Geolocation error:', err);
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
   };
 
-  const handleSelectComplex = (complex: ResidentialComplex) => {
-    setSelectedComplex(complex);
+  const handleSelectShop = (shop: ShopInfo) => {
+    setSelectedShop(shop);
     hapticFeedback('light');
     setStep('address');
   };
 
   const handleSaveAddress = async () => {
-    if (!selectedComplex || !entrance.trim() || !floor.trim() || !apartment.trim()) return;
+    if (!selectedShop || !entrance.trim() || !floor.trim() || !apartment.trim()) return;
 
     try {
       setSaving(true);
       await saveUserAddress({
-        complexId: selectedComplex.id,
+        shopId: selectedShop.id,
         entrance: entrance.trim(),
         floor: floor.trim(),
         apartment: apartment.trim(),
@@ -135,7 +135,7 @@ export default function SelectComplexPage() {
 
   const isAddressValid = entrance.trim() && floor.trim() && apartment.trim();
 
-  if (step === 'address' && selectedComplex) {
+  if (step === 'address' && selectedShop) {
     return (
       <div className="min-h-screen pb-8 page-enter">
         {/* Header */}
@@ -149,23 +149,23 @@ export default function SelectComplexPage() {
             </button>
             <div>
               <h1 className="text-lg font-bold text-gray-900">Ваш адрес</h1>
-              <p className="text-xs text-gray-500 font-medium">{selectedComplex.name}</p>
+              <p className="text-xs text-gray-500 font-medium">{selectedShop.name}</p>
             </div>
           </div>
         </div>
 
         <div className="px-4 pt-6 space-y-5">
-          {/* Selected Complex Card */}
+          {/* Selected Shop Card */}
           <div className="bg-gradient-to-r from-primary to-secondary rounded-3xl p-5 shadow-lg shadow-primary/20 relative overflow-hidden">
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-1">
-                <Building2 size={18} className="text-white/90" />
-                <h2 className="text-[17px] font-bold text-white">{selectedComplex.name}</h2>
+                <Store size={18} className="text-white/90" />
+                <h2 className="text-[17px] font-bold text-white">{selectedShop.name}</h2>
               </div>
-              <p className="text-[13px] text-white/80 font-medium">{selectedComplex.address}</p>
+              <p className="text-[13px] text-white/80 font-medium">{selectedShop.address || 'Адрес не указан'}</p>
             </div>
             <div className="absolute -right-4 -bottom-6 text-[80px] drop-shadow-xl transform -rotate-12 select-none opacity-30">
-              🏢
+              🏪
             </div>
           </div>
 
@@ -264,7 +264,7 @@ export default function SelectComplexPage() {
           Добро пожаловать! 👋
         </h1>
         <p className="text-[15px] text-gray-500 font-medium mt-1">
-          Выберите ваш жилой комплекс для доставки
+          Выберите ближайший магазин для доставки
         </p>
       </div>
 
@@ -291,38 +291,40 @@ export default function SelectComplexPage() {
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
-        {/* Complex List */}
+        {/* Shop List */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Loader2 size={36} className="text-primary animate-spin" />
-            <p className="text-gray-500 text-[15px] font-medium">Загрузка ЖК...</p>
+            <p className="text-gray-500 text-[15px] font-medium">Загрузка магазинов...</p>
           </div>
-        ) : complexes.length === 0 ? (
+        ) : shops.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Building2 size={56} className="text-gray-300" />
-            <p className="text-gray-500 text-[15px] font-medium">Нет доступных ЖК</p>
+            <Store size={56} className="text-gray-300" />
+            <p className="text-gray-500 text-[15px] font-medium">Нет доступных магазинов</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {complexes.map((complex) => (
+            {shops.map((shop) => (
               <button
-                key={complex.id}
-                onClick={() => handleSelectComplex(complex)}
+                key={shop.id}
+                onClick={() => handleSelectShop(shop)}
                 className="w-full bg-white border border-gray-100 shadow-sm hover:shadow-md rounded-2xl p-5 text-left
                            transition-all active:scale-[0.98] flex items-center gap-4 group"
               >
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center flex-shrink-0
                               group-hover:from-primary/20 group-hover:to-accent/20 transition-colors">
-                  <Building2 size={22} className="text-primary" />
+                  <Store size={22} className="text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[15px] font-bold text-gray-900 truncate">
-                    {complex.name}
+                    {shop.name}
                   </h3>
-                  <p className="text-[13px] text-gray-500 font-medium mt-0.5 truncate flex items-center gap-1">
-                    <MapPin size={12} />
-                    {complex.address}
-                  </p>
+                  {shop.address && (
+                    <p className="text-[13px] text-gray-500 font-medium mt-0.5 truncate flex items-center gap-1">
+                      <MapPin size={12} />
+                      {shop.address}
+                    </p>
+                  )}
                 </div>
                 <ChevronRight size={20} className="text-gray-300 flex-shrink-0 group-hover:text-primary transition-colors" />
               </button>

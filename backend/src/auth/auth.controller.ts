@@ -25,7 +25,7 @@ export class AuthController {
       username: user.username,
       role: user.role,
       address: user.address,
-      complexId: user.complexId,
+      selectedShopId: user.selectedShopId,
       entrance: user.entrance,
       floor: user.floor,
       apartment: user.apartment,
@@ -37,7 +37,7 @@ export class AuthController {
     @Req() req: any,
     @Body()
     body: {
-      complexId: number;
+      shopId: number;
       entrance: string;
       floor: string;
       apartment: string;
@@ -49,7 +49,7 @@ export class AuthController {
     const updated = await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        complexId: body.complexId,
+        selectedShopId: body.shopId,
         entrance: body.entrance,
         floor: body.floor,
         apartment: body.apartment,
@@ -59,7 +59,7 @@ export class AuthController {
 
     return {
       id: updated.id,
-      complexId: updated.complexId,
+      selectedShopId: updated.selectedShopId,
       entrance: updated.entrance,
       floor: updated.floor,
       apartment: updated.apartment,
