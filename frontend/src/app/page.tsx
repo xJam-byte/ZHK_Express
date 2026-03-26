@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Package, Loader2, ClipboardList } from 'lucide-react';
+import { Search, Package, Loader2, ClipboardList, Heart } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import CartButton from '@/components/CartButton';
 import { fetchProducts, fetchMe, fetchCategories, fetchWishlist, toggleWishlistItem, Category } from '@/lib/api';
@@ -24,7 +24,8 @@ export default function CatalogPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  
+  const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
+
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -69,7 +70,7 @@ export default function CatalogPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [productsData, categoriesData] = await Promise.all([
         fetchProducts(),
         fetchCategories(),
@@ -77,7 +78,7 @@ export default function CatalogPage() {
 
       const pArr: Product[] = Array.isArray(productsData) ? [...productsData] : [];
       setProducts(pArr);
-      
+
       const cArr: Category[] = Array.isArray(categoriesData) ? [...categoriesData] : [];
       setCategories(cArr);
 
@@ -113,7 +114,7 @@ export default function CatalogPage() {
       });
 
       const res = await toggleWishlistItem(productId);
-      
+
       // Sync with real state if needed
       setWishlistIds(prev => {
         const next = new Set(prev);
@@ -134,8 +135,9 @@ export default function CatalogPage() {
     const matchesSearch = p.name.toLowerCase().indexOf(searchLower) !== -1;
     // We assume backend returns categoryId in Product (need to ensure Product interface has it, but it's okay for JS)
     const matchesCategory = selectedCategory === null || (p as any).categoryId === selectedCategory;
-    
-    if (matchesSearch && matchesCategory) {
+    const matchesFavorites = activeTab === 'all' || wishlistIds.has(p.id);
+
+    if (matchesSearch && matchesCategory && matchesFavorites) {
       filtered.push(p);
     }
   }
@@ -194,22 +196,39 @@ export default function CatalogPage() {
         {/* Categories Scroller */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth pb-1">
           <button
-            onClick={() => setSelectedCategory(null)}
+            onClick={() => { setActiveTab('all'); setSelectedCategory(null); }}
             className={`flex-shrink-0 px-4 py-2 rounded-xl text-[14px] font-semibold transition-colors
-              ${selectedCategory === null 
-                ? 'bg-gray-900 text-white' 
+              ${activeTab === 'all' && selectedCategory === null
+                ? 'bg-gray-900 text-white'
                 : 'bg-gray-100/80 text-gray-600 hover:bg-gray-200'}`}
           >
             Все
           </button>
-          
+
+          <button
+            onClick={() => { setActiveTab('favorites'); setSelectedCategory(null); }}
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-[14px] font-semibold transition-all flex items-center gap-1.5
+              ${activeTab === 'favorites'
+                ? 'bg-red-500 text-white shadow-sm shadow-red-500/25'
+                : 'bg-gray-100/80 text-gray-600 hover:bg-gray-200'}`}
+          >
+            <Heart size={14} className={activeTab === 'favorites' ? 'fill-white' : ''} />
+            Избранное
+            {wishlistIds.size > 0 && (
+              <span className={`ml-0.5 text-[11px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center
+                ${activeTab === 'favorites' ? 'bg-white/25 text-white' : 'bg-gray-300/60 text-gray-700'}`}>
+                {wishlistIds.size}
+              </span>
+            )}
+          </button>
+
           {categories.map(cat => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
+              onClick={() => { setActiveTab('all'); setSelectedCategory(cat.id); }}
               className={`flex-shrink-0 px-4 py-2 rounded-xl text-[14px] font-semibold transition-colors
-                ${selectedCategory === cat.id 
-                  ? 'bg-gray-900 text-white' 
+                ${activeTab === 'all' && selectedCategory === cat.id
+                  ? 'bg-gray-900 text-white'
                   : 'bg-gray-100/80 text-gray-600 hover:bg-gray-200'}`}
             >
               {cat.name}
@@ -221,15 +240,32 @@ export default function CatalogPage() {
       {/* Content */}
       <div className="px-5 pt-5">
         {!search && !loading && !error && filtered.length > 0 && (
-          <div className="mb-6 bg-gradient-to-r from-primary to-secondary rounded-3xl p-5 shadow-lg shadow-primary/20 relative overflow-hidden">
-            <div className="relative z-10 w-3/4">
-              <h2 className="text-[17px] font-bold text-white leading-snug mb-1.5 drop-shadow-sm">
-                Свежие продукты <br/>прямо к двери
+          <div className="mb-6 bg-gradient-to-br from-primary via-[#5edb7d] to-secondary rounded-3xl p-6 shadow-xl shadow-primary/20 relative overflow-hidden group">
+            {/* Background decorative elements */}
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+
+            <div className="relative z-10 w-3/5">
+              <h2 className="text-[20px] font-black text-white leading-tight mb-2 drop-shadow-md">
+                Свежие продукты <br />прямо к двери
               </h2>
-              <p className="text-[13px] text-white/90 font-medium">Бесплатная доставка от 3000 ₸</p>
+              <div className="inline-flex items-center px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-lg border border-white/30">
+                <p className="text-[13px] text-white font-bold tracking-wide">Первая доставка — бесплатно</p>
+              </div>
             </div>
-            <div className="absolute -right-4 -bottom-6 text-[80px] drop-shadow-xl transform -rotate-12 select-none">
+
+            {/* Floating Ingredients */}
+            <div className="absolute -right-4 -bottom-6 text-[90px] drop-shadow-2xl animate-float select-none z-0">
               🥦
+            </div>
+            <div className="absolute right-12 top-2 text-[45px] drop-shadow-lg animate-float-delayed opacity-90 select-none">
+              🥑
+            </div>
+            <div className="absolute right-2 top-10 text-[35px] drop-shadow-lg animate-float opacity-80 select-none" style={{ animationDelay: '0.5s' }}>
+              🍅
+            </div>
+            <div className="absolute right-24 bottom-2 text-[30px] drop-shadow-md animate-float-delayed opacity-70 select-none" style={{ animationDelay: '1.2s' }}>
+              🍋
             </div>
           </div>
         )}
@@ -252,10 +288,26 @@ export default function CatalogPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Search size={56} className="text-gray-300" />
-            <p className="text-gray-500 text-[15px] font-medium">
-              {search ? 'Ничего не найдено' : 'Каталог пуст'}
-            </p>
+            {activeTab === 'favorites' ? (
+              <>
+                <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-1">
+                  <Heart size={36} className="text-red-300" />
+                </div>
+                <p className="text-gray-400 text-[15px] font-medium text-center leading-relaxed">
+                  Вы пока ничего не добавили<br />в избранное
+                </p>
+                <p className="text-gray-300 text-[13px] text-center">
+                  Нажмите 🤍 на карточке товара
+                </p>
+              </>
+            ) : (
+              <>
+                <Search size={56} className="text-gray-300" />
+                <p className="text-gray-500 text-[15px] font-medium">
+                  {search ? 'Ничего не найдено' : 'Каталог пуст'}
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <>
@@ -270,9 +322,9 @@ export default function CatalogPage() {
 
             <div className="grid grid-cols-2 gap-4">
               {filtered.map((product) => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product} 
+                <ProductCard
+                  key={product.id}
+                  product={product}
                   isWishlisted={wishlistIds.has(product.id)}
                   onToggleWishlist={handleToggleWishlist}
                 />
