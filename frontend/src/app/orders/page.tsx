@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, Package, ChevronRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { Clock, Package, ChevronRight, ArrowLeft, Loader2, Star } from 'lucide-react';
 import { fetchOrders } from '@/lib/api';
 import { getTelegramWebApp } from '@/lib/telegram';
 
@@ -115,6 +115,30 @@ export default function OrdersPage() {
                   {order.items?.length || 0} {order.items?.length === 1 ? 'товар' : 'товаров'}
                 </div>
               </div>
+
+              {/* Rating */}
+              {order.status === 'DELIVERED' && order.rating && (
+                <div className="w-full px-0.5">
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={14}
+                        className={`${
+                          order.rating >= star
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-200'
+                        }`}
+                      />
+                    ))}
+                    {order.review && (
+                      <span className="text-gray-400 text-[12px] font-medium truncate ml-1 max-w-[140px]">
+                        {order.review}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-between pt-4 mt-1 border-t border-gray-100 border-dashed w-full">
                 <span className="text-gray-900 font-black text-[18px]">

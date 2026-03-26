@@ -63,4 +63,14 @@ export class OrdersController {
   ) {
     return this.ordersService.rateOrder(id, req.user.id, rating, review);
   }
+
+  @Get('shop/:shopId/reviews')
+  async getShopReviews(@Param('shopId', ParseIntPipe) shopId: number) {
+    return this.ordersService.getShopReviews(shopId);
+  }
+
+  @Get('shop/:shopId/rating')
+  async getShopRating(@Param('shopId', ParseIntPipe) shopId: number) {
+    return this.ordersService.getShopRatingStats(shopId);
+  }
 }

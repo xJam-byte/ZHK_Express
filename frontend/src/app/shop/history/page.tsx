@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Clock, Package, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Clock, Package, Loader2, CheckCircle2, Star } from 'lucide-react';
 import { fetchOrderHistory } from '@/lib/api';
 import { getTelegramWebApp } from '@/lib/telegram';
 
@@ -112,6 +112,31 @@ export default function ShopHistoryPage() {
                   <p className="text-tg-hint text-xs mt-2 pt-2 border-t border-white/5">
                     {order.deliveryAddress}
                   </p>
+                )}
+
+                {/* Rating & Review */}
+                {isDelivered && order.rating && (
+                  <div className="mt-2 pt-2 border-t border-white/5">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={12}
+                          className={`${
+                            order.rating >= star
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-white/20'
+                          }`}
+                        />
+                      ))}
+                      <span className="text-tg-hint text-[11px] ml-1">{order.rating}/5</span>
+                    </div>
+                    {order.review && (
+                      <p className="text-tg-hint text-xs mt-1 italic">
+                        &ldquo;{order.review}&rdquo;
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             );

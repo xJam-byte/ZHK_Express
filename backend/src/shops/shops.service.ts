@@ -14,7 +14,7 @@ export class ShopsService {
   // --- PUBLIC METHODS ---
 
   async findAllActive() {
-    return this.prisma.shop.findMany({
+    const shops = await this.prisma.shop.findMany({
       where: { isActive: true },
       select: {
         id: true,
@@ -26,6 +26,29 @@ export class ShopsService {
       },
       orderBy: { name: 'asc' },
     });
+
+    // Enrich with average rating
+    const enriched = await Promise.all(
+      shops.map(async (shop) => {
+        const agg = await this.prisma.order.aggregate({
+          where: {
+            shopId: shop.id,
+            rating: { not: null },
+            status: 'DELIVERED',
+          },
+          _avg: { rating: true },
+          _count: { rating: true },
+        });
+
+        return {
+          ...shop,
+          averageRating: agg._avg.rating ? Math.round(agg._avg.rating * 10) / 10 : null,
+          reviewCount: agg._count.rating,
+        };
+      }),
+    );
+
+    return enriched;
   }
 
   async resolveByGeo(latitude: number, longitude: number) {

@@ -312,4 +312,64 @@ export class OrdersService {
 
     return updated;
   }
+
+  async getShopReviews(shopId: number) {
+    return this.prisma.order.findMany({
+      where: {
+        shopId,
+        rating: { not: null },
+        status: 'DELIVERED',
+      },
+      select: {
+        id: true,
+        rating: true,
+        review: true,
+        createdAt: true,
+        deliveredAt: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { deliveredAt: 'desc' },
+    });
+  }
+
+  async getShopRatingStats(shopId: number) {
+    const agg = await this.prisma.order.aggregate({
+      where: {
+        shopId,
+        rating: { not: null },
+        status: 'DELIVERED',
+      },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    // Star breakdown
+    const breakdown: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const groups = await this.prisma.order.groupBy({
+      by: ['rating'],
+      where: {
+        shopId,
+        rating: { not: null },
+        status: 'DELIVERED',
+      },
+      _count: { rating: true },
+    });
+
+    for (const g of groups) {
+      if (g.rating !== null) {
+        breakdown[g.rating] = g._count.rating;
+      }
+    }
+
+    return {
+      averageRating: agg._avg.rating ? Math.round(agg._avg.rating * 10) / 10 : null,
+      totalReviews: agg._count.rating,
+      breakdown,
+    };
+  }
 }

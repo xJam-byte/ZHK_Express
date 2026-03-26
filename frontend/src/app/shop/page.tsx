@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw, Check, Package, Truck, Loader2, ChevronRight, History, ShoppingBag, Upload } from 'lucide-react';
+import { RefreshCw, Check, Package, Truck, Loader2, ChevronRight, History, ShoppingBag, Upload, Star } from 'lucide-react';
 import OrderTimer from '@/components/OrderTimer';
-import { fetchOrders, updateOrderStatus } from '@/lib/api';
+import { fetchOrders, updateOrderStatus, fetchShopRating, fetchMe } from '@/lib/api';
 import { hapticFeedback, hapticNotification } from '@/lib/telegram';
 
 interface OrderItem {
@@ -49,6 +49,7 @@ export default function ShopPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [ratingStats, setRatingStats] = useState<{ averageRating: number | null; totalReviews: number } | null>(null);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -64,9 +65,22 @@ export default function ShopPage() {
 
   useEffect(() => {
     loadOrders();
+    loadRatingStats();
     const interval = setInterval(loadOrders, 15000);
     return () => clearInterval(interval);
   }, [loadOrders]);
+
+  const loadRatingStats = async () => {
+    try {
+      const me = await fetchMe();
+      if (me.shopId) {
+        const stats = await fetchShopRating(me.shopId);
+        setRatingStats(stats);
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     try {
@@ -120,6 +134,13 @@ export default function ShopPage() {
               <Upload size={16} className="text-tg-hint" />
             </button>
             <button
+              onClick={() => router.push('/shop/reviews')}
+              className="w-9 h-9 rounded-xl bg-tg-secondary-bg flex items-center justify-center"
+              title="Отзывы"
+            >
+              <Star size={16} className="text-tg-hint" />
+            </button>
+            <button
               onClick={() => router.push('/shop/history')}
               className="w-9 h-9 rounded-xl bg-tg-secondary-bg flex items-center justify-center"
               title="История"
@@ -141,6 +162,43 @@ export default function ShopPage() {
       </div>
 
       <div className="px-4 pt-4 space-y-4">
+        {/* Rating Summary Card */}
+        {ratingStats && ratingStats.totalReviews > 0 && (
+          <button
+            onClick={() => router.push('/shop/reviews')}
+            className="w-full bg-tg-secondary-bg rounded-2xl p-4 flex items-center gap-4 transition-transform active:scale-[0.98]"
+          >
+            <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
+              <Star size={22} className="fill-yellow-400 text-yellow-400" />
+            </div>
+            <div className="flex-1 text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-tg-text">
+                  {ratingStats.averageRating}
+                </span>
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={12}
+                      className={`${
+                        (ratingStats.averageRating ?? 0) >= star
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : (ratingStats.averageRating ?? 0) >= star - 0.5
+                          ? 'fill-yellow-400/50 text-yellow-400'
+                          : 'text-white/20'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-tg-hint mt-0.5">
+                {ratingStats.totalReviews} {ratingStats.totalReviews === 1 ? 'отзыв' : ratingStats.totalReviews < 5 ? 'отзыва' : 'отзывов'}
+              </p>
+            </div>
+            <ChevronRight size={16} className="text-tg-hint" />
+          </button>
+        )}
         {loading && orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Loader2 size={32} className="text-tg-button animate-spin" />

@@ -51,6 +51,7 @@ export interface UserProfile {
   entrance: string | null;
   floor: string | null;
   apartment: string | null;
+  shopId?: number; // present for SHOP role users
 }
 
 export const fetchMe = (): Promise<UserProfile> =>
@@ -139,6 +140,16 @@ export const updateOrderStatus = (id: number, status: string) =>
 
 export const rateOrder = (id: number, rating: number, review?: string) =>
   api.patch(`/orders/${id}/rate`, { rating, review }).then((r) => r.data);
+
+export const fetchShopReviews = (shopId: number) =>
+  api.get(`/orders/shop/${shopId}/reviews`).then((r) => r.data);
+
+export const fetchShopRating = (shopId: number): Promise<{
+  averageRating: number | null;
+  totalReviews: number;
+  breakdown: Record<number, number>;
+}> =>
+  api.get(`/orders/shop/${shopId}/rating`).then((r) => r.data);
 
 // --- Promo Codes ---
 export const validatePromoCode = (code: string, orderAmount: number) =>

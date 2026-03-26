@@ -17,6 +17,17 @@ export class AuthController {
   @Get('me')
   async getMe(@Req() req: any) {
     const user = req.user;
+
+    // Include shopId for SHOP role users
+    let ownShopId: number | null = null;
+    if (user.role === 'SHOP') {
+      const shop = await this.prisma.shop.findUnique({
+        where: { userId: user.id },
+        select: { id: true },
+      });
+      ownShopId = shop?.id ?? null;
+    }
+
     return {
       id: user.id,
       telegramId: user.telegramId.toString(),
@@ -29,6 +40,7 @@ export class AuthController {
       entrance: user.entrance,
       floor: user.floor,
       apartment: user.apartment,
+      ...(ownShopId !== null && { shopId: ownShopId }),
     };
   }
 
