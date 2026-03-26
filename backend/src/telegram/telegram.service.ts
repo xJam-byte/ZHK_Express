@@ -212,6 +212,32 @@ export class TelegramService {
     }
   }
 
+  // ─── Send document to user ────────────────────────────────
+  async sendDocumentToUser(
+    chatId: string | number,
+    fileBuffer: Buffer,
+    filename: string,
+    caption?: string,
+  ) {
+    if (!this.bot) {
+      this.logger.warn('Cannot send document — bot not configured');
+      return;
+    }
+
+    try {
+      await this.bot.telegram.sendDocument(
+        chatId,
+        { source: fileBuffer, filename },
+        { caption },
+      );
+      this.logger.log(`Document "${filename}" sent to chat ${chatId}`);
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to send document: ${errMsg}`);
+      throw error;
+    }
+  }
+
   onModuleDestroy() {
     this.bot?.stop('Module destroy');
   }

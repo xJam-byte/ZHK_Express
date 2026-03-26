@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Post,
+  Req,
   UseGuards,
   Header,
 } from '@nestjs/common';
@@ -23,5 +25,11 @@ export class DashboardController {
   @Header('Cache-Control', 'no-store, no-cache, must-revalidate')
   async exportOrders() {
     return this.dashboardService.exportOrders();
+  }
+
+  @Post('export/send-report')
+  async sendReport(@Req() req: any) {
+    const adminTelegramId = req.user.telegramId.toString();
+    return this.dashboardService.generateAndSendReport(adminTelegramId);
   }
 }

@@ -26,7 +26,7 @@ import {
   suspendShop,
   resumeShop,
   importProducts,
-  exportOrders,
+  sendReport,
   DashboardData,
 } from '@/lib/api';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -41,6 +41,7 @@ export default function AdminPage() {
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Import state
   const [file, setFile] = useState<File | null>(null);
@@ -99,62 +100,17 @@ export default function AdminPage() {
 
   const handleExport = async () => {
     try {
+      setExportLoading(true);
       hapticFeedback('medium');
-      const orders = await exportOrders();
-      
-      const headers = [
-        'ID', 'Дата', 'Статус', 'Магазин',
-        'Клиент', 'Адрес',
-        'Товары', 'Кол-во товаров',
-        'Сумма товаров', 'Доставка', 'Скидка', 'Итого',
-        'Промокод', 'Оценка', 'Отзыв',
-      ];
-      const rows = orders.map((o: any) => {
-        const itemsList = (o.items || [])
-          .map((i: any) => `${i.product?.name || '?'} x${i.quantity}`)
-          .join('; ');
-        const itemsCount = (o.items || []).reduce((sum: number, i: any) => sum + i.quantity, 0);
-        const subtotal = (o.items || []).reduce(
-          (sum: number, i: any) => sum + (i.priceAtPurchase * i.quantity), 0
-        );
-
-        return [
-          o.id,
-          new Date(o.createdAt).toLocaleString('ru-RU'),
-          o.status,
-          o.shop?.name || '',
-          `${o.user?.firstName || ''} ${o.user?.lastName || ''}`.trim() || o.user?.username || '',
-          o.deliveryAddress || '',
-          itemsList,
-          itemsCount,
-          subtotal,
-          o.deliveryFee || 0,
-          o.discountAmount || 0,
-          o.totalAmount || 0,
-          o.promoCode?.code || '',
-          o.rating || '',
-          o.review || '',
-        ];
-      });
-      const csvContent = [
-        headers.join(','),
-        ...rows.map((r: any[]) => r.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(','))
-      ].join('\n');
-      
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `jk_express_analytics_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
+      await sendReport();
       hapticNotification('success');
+      alert('✅ Отчёт отправлен в ваш Telegram-чат!');
     } catch (err) {
       console.error(err);
       hapticNotification('error');
+      alert('❌ Не удалось отправить отчёт');
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -219,10 +175,15 @@ export default function AdminPage() {
           {tab === 'analytics' && (
             <button
               onClick={handleExport}
-              className="px-3 py-1.5 bg-tg-button/10 text-tg-button text-[11px] font-bold rounded-lg flex items-center gap-1.5 transition-colors active:scale-95"
+              disabled={exportLoading}
+              className="px-3 py-1.5 bg-tg-button/10 text-tg-button text-[11px] font-bold rounded-lg flex items-center gap-1.5 transition-colors active:scale-95 disabled:opacity-50"
             >
-              <FileSpreadsheet size={14} />
-              Экспорт CSV
+              {exportLoading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <FileSpreadsheet size={14} />
+              )}
+              {exportLoading ? 'Отправка...' : 'Отправить отчёт'}
             </button>
           )}
         </div>

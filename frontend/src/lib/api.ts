@@ -197,6 +197,9 @@ export const fetchDashboard = (): Promise<DashboardData> =>
 export const exportOrders = () =>
   api.get(`/admin/export/orders?_t=${Date.now()}`).then((r) => r.data);
 
+export const sendReport = () =>
+  api.post('/admin/export/send-report').then((r) => r.data);
+
 // --- Admin Shops ---
 export const fetchShops = () =>
   api.get("/admin/shops").then((r) => r.data);

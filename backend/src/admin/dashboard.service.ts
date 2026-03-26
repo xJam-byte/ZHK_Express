@@ -1,11 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TelegramService } from '../telegram/telegram.service';
 
 @Injectable()
 export class DashboardService {
   private readonly logger = new Logger(DashboardService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly telegramService: TelegramService,
+  ) {}
 
   async getDashboard() {
     // Total orders stats
@@ -181,5 +185,96 @@ export class DashboardService {
       },
       orderBy: { createdAt: 'desc' }
     });
+  }
+
+  async generateAndSendReport(adminTelegramId: string | number) {
+    const orders = await this.exportOrders();
+    const dashboard = await this.getDashboard();
+
+    // Build CSV content
+    const headers = [
+      'ID', 'Дата', 'Статус', 'Магазин',
+      'Клиент', 'Адрес',
+      'Товары', 'Кол-во',
+      'Сумма товаров', 'Доставка', 'Скидка', 'Итого',
+      'Промокод', 'Оценка', 'Отзыв',
+    ];
+
+    const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+    const rows = orders.map((o: any) => {
+      const itemsList = (o.items || [])
+        .map((i: any) => `${i.product?.name || '?'} x${i.quantity}`)
+        .join('; ');
+      const itemsCount = (o.items || []).reduce((s: number, i: any) => s + i.quantity, 0);
+      const subtotal = (o.items || []).reduce(
+        (s: number, i: any) => s + (i.priceAtPurchase * i.quantity), 0,
+      );
+
+      return [
+        o.id,
+        new Date(o.createdAt).toLocaleString('ru-RU'),
+        o.status,
+        o.shop?.name || '',
+        `${o.user?.firstName || ''} ${o.user?.lastName || ''}`.trim() || '',
+        o.deliveryAddress || '',
+        itemsList,
+        itemsCount,
+        subtotal,
+        o.deliveryFee || 0,
+        o.discountAmount || 0,
+        o.totalAmount || 0,
+        o.promoCode?.code || '',
+        o.rating || '',
+        o.review || '',
+      ].map(esc).join(',');
+    });
+
+    // Summary section at the bottom
+    const summary = [
+      '',
+      '',
+      ['СВОДКА'].map(esc).join(','),
+      ['Общий доход', `${dashboard.totalRevenue} ₸`].map(esc).join(','),
+      ['Доставка (наш доход)', `${dashboard.platformFee} ₸`].map(esc).join(','),
+      ['Средний чек', `${dashboard.averageOrderAmount} ₸`].map(esc).join(','),
+      ['Всего заказов', dashboard.totalOrders].map(esc).join(','),
+      ['Доставлено', dashboard.deliveredOrders].map(esc).join(','),
+      ['Отменено', dashboard.cancelledOrders].map(esc).join(','),
+      ['Клиентов', dashboard.totalClients].map(esc).join(','),
+      '',
+      ['ДОХОД ПО МАГАЗИНАМ'].map(esc).join(','),
+      ['Магазин', 'Доход', 'Заказов', 'Товаров'].map(esc).join(','),
+      ...dashboard.shops.map((shop: any) =>
+        [shop.name, `${shop.revenue} ₸`, shop.deliveredOrderCount, shop.totalProducts].map(esc).join(',')
+      ),
+    ];
+
+    const csvContent = '\uFEFF' + [
+      headers.join(','),
+      ...rows,
+      ...summary,
+    ].join('\n');
+
+    const buffer = Buffer.from(csvContent, 'utf-8');
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `JK_Express_Аналитика_${date}.csv`;
+
+    const caption =
+      `📊 Финансовая аналитика JK-Express\n\n` +
+      `💰 Общий доход: ${dashboard.totalRevenue.toLocaleString()} ₸\n` +
+      `🚚 Наш доход: ${dashboard.platformFee.toLocaleString()} ₸\n` +
+      `📦 Заказов: ${dashboard.totalOrders}\n` +
+      `✅ Доставлено: ${dashboard.deliveredOrders}`;
+
+    await this.telegramService.sendDocumentToUser(
+      adminTelegramId,
+      buffer,
+      filename,
+      caption,
+    );
+
+    this.logger.log(`Report sent to admin TG:${adminTelegramId}`);
+    return { success: true, filename, ordersCount: orders.length };
   }
 }
