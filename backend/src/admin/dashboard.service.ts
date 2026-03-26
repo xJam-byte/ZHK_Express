@@ -175,7 +175,8 @@ export class DashboardService {
       take: 10000,
       include: {
         user: { select: { firstName: true, lastName: true, username: true } },
-        items: { include: { product: { select: { name: true } } } },
+        shop: { select: { id: true, name: true } },
+        items: { include: { product: { select: { name: true, price: true } } } },
         promoCode: { select: { code: true } },
       },
       orderBy: { createdAt: 'desc' }

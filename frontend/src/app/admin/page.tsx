@@ -102,18 +102,40 @@ export default function AdminPage() {
       hapticFeedback('medium');
       const orders = await exportOrders();
       
-      const headers = ['ID', 'Дата', 'Сумма', 'Доставка', 'Скидка', 'Промокод', 'Статус', 'Клиент', 'Адрес'];
-      const rows = orders.map((o: any) => [
-        o.id,
-        new Date(o.createdAt).toLocaleString('ru-RU'),
-        o.totalAmount,
-        o.deliveryFee,
-        o.discountAmount,
-        o.promoCode?.code || '',
-        o.status,
-        `${o.user?.firstName || ''} ${o.user?.lastName || ''}`.trim(),
-        o.deliveryAddress
-      ]);
+      const headers = [
+        'ID', 'Дата', 'Статус', 'Магазин',
+        'Клиент', 'Адрес',
+        'Товары', 'Кол-во товаров',
+        'Сумма товаров', 'Доставка', 'Скидка', 'Итого',
+        'Промокод', 'Оценка', 'Отзыв',
+      ];
+      const rows = orders.map((o: any) => {
+        const itemsList = (o.items || [])
+          .map((i: any) => `${i.product?.name || '?'} x${i.quantity}`)
+          .join('; ');
+        const itemsCount = (o.items || []).reduce((sum: number, i: any) => sum + i.quantity, 0);
+        const subtotal = (o.items || []).reduce(
+          (sum: number, i: any) => sum + (i.priceAtPurchase * i.quantity), 0
+        );
+
+        return [
+          o.id,
+          new Date(o.createdAt).toLocaleString('ru-RU'),
+          o.status,
+          o.shop?.name || '',
+          `${o.user?.firstName || ''} ${o.user?.lastName || ''}`.trim() || o.user?.username || '',
+          o.deliveryAddress || '',
+          itemsList,
+          itemsCount,
+          subtotal,
+          o.deliveryFee || 0,
+          o.discountAmount || 0,
+          o.totalAmount || 0,
+          o.promoCode?.code || '',
+          o.rating || '',
+          o.review || '',
+        ];
+      });
       const csvContent = [
         headers.join(','),
         ...rows.map((r: any[]) => r.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(','))
@@ -123,7 +145,7 @@ export default function AdminPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `jk_express_analytics_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -28,6 +28,12 @@ export class OrdersService {
 
     // FIX #1: All checks & mutations inside a single transaction to prevent race conditions
     const order = await this.prisma.$transaction(async (tx) => {
+      // Get user's selected shop
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { selectedShopId: true },
+      });
+
       // Re-fetch products INSIDE the transaction for consistency
       const products = await tx.product.findMany({
         where: { id: { in: productIds }, isActive: true },
@@ -105,6 +111,7 @@ export class OrdersService {
       const created = await tx.order.create({
         data: {
           userId,
+          shopId: user?.selectedShopId,
           totalAmount,
           deliveryFee: finalDeliveryFee,
           discountAmount,
