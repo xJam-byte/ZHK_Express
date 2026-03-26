@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   UseGuards,
+  Header,
 } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { TelegramAuthGuard, Roles } from '../auth/telegram-auth.guard';
@@ -19,6 +20,7 @@ export class DashboardController {
   }
 
   @Get('export/orders')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate')
   async exportOrders() {
     return this.dashboardService.exportOrders();
   }
