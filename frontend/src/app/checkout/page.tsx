@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Minus, Plus, Trash2, MapPin, Loader2, Tag, CheckCircle2 } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
-import { createOrder, validatePromoCode } from '@/lib/api';
+import { createOrder, validatePromoCode, fetchMe } from '@/lib/api';
 import { getTelegramWebApp, hapticFeedback, hapticNotification } from '@/lib/telegram';
 
 const DELIVERY_FEE = 200;
@@ -18,6 +18,15 @@ export default function CheckoutPage() {
   const [apartment, setApartment] = useState('');
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Pre-fill address from user profile on mount
+  useEffect(() => {
+    fetchMe().then((me) => {
+      if (me.entrance && !entrance) setEntrance(me.entrance);
+      if (me.floor && !floor) setFloor(me.floor);
+      if (me.apartment && !apartment) setApartment(me.apartment);
+    }).catch(() => {});
+  }, []);
 
   // Promo code states
   const [promoInput, setPromoInput] = useState('');

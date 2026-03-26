@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { PromocodesService } from '../promocodes/promocodes.service';
+import { EventsGateway } from '../events/events.gateway';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderStatus, Role, PromoType, PromoCode } from '@prisma/client';
 
@@ -20,6 +21,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly telegramService: TelegramService,
     private readonly promocodesService: PromocodesService,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async createOrder(userId: number, dto: CreateOrderDto) {
@@ -162,6 +164,9 @@ export class OrdersService {
       this.logger.error(`Failed to send client confirmation: ${err.message}`);
     });
 
+    // 3. WebSocket real-time update
+    this.eventsGateway.emitOrderCreated(order);
+
     return order;
   }
 
@@ -281,6 +286,9 @@ export class OrdersService {
       this.logger.error(`Failed to send shop notification: ${err.message}`);
     });
 
+    // 3. WebSocket real-time update
+    this.eventsGateway.emitOrderUpdated(updated);
+
     return updated;
   }
 
@@ -316,6 +324,9 @@ export class OrdersService {
     });
 
     this.logger.log(`Order #${id} rated: ${rating} stars`);
+
+    // WebSocket real-time update
+    this.eventsGateway.emitOrderRated({ ...updated, shopId: order.shopId });
 
     return updated;
   }

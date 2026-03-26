@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { RefreshCw, Check, Package, Truck, Loader2, ChevronRight, History, ShoppingBag, Upload, Star } from 'lucide-react';
 import OrderTimer from '@/components/OrderTimer';
-import { fetchOrders, updateOrderStatus, fetchShopRating, fetchMe } from '@/lib/api';
+import { fetchOrders, updateOrderStatus, fetchMe, fetchShopRating } from '@/lib/api';
+import { useSocketEvent } from '@/lib/socket';
 import { hapticFeedback, hapticNotification } from '@/lib/telegram';
 
 interface OrderItem {
@@ -66,9 +67,12 @@ export default function ShopPage() {
   useEffect(() => {
     loadOrders();
     loadRatingStats();
-    const interval = setInterval(loadOrders, 15000);
-    return () => clearInterval(interval);
   }, [loadOrders]);
+
+  // Real-time updates via WebSocket
+  useSocketEvent('order:created', () => loadOrders());
+  useSocketEvent('order:updated', () => loadOrders());
+  useSocketEvent('order:rated', () => loadRatingStats());
 
   const loadRatingStats = async () => {
     try {

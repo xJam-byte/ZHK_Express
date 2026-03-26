@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Loader2, MapPin, MessageSquare, CheckCircle2, Clock, Package, Truck, ShoppingBag, XCircle, Star } from 'lucide-react';
 import { fetchOrderById, rateOrder } from '@/lib/api';
+import { useSocketEvent } from '@/lib/socket';
 import { getTelegramWebApp, hapticFeedback, hapticNotification } from '@/lib/telegram';
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
@@ -38,13 +39,17 @@ export default function OrderTrackingPage() {
       webapp.BackButton?.onClick(() => router.push('/orders'));
     }
     loadOrder();
-    // Auto-refresh every 10s if not rating
-    const interval = setInterval(loadOrder, 10000);
     return () => {
-      clearInterval(interval);
       webapp?.BackButton?.hide();
     };
   }, [orderId]);
+
+  // Real-time updates via WebSocket
+  useSocketEvent('order:updated', (data: any) => {
+    if (data.id === orderId) {
+      loadOrder();
+    }
+  });
 
   const handleRateSubmit = async () => {
     if (rating < 1 || isSubmittingRating) return;
